@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ptit-red: #c00909;
+  --color-ptit-darkred: #a30000;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-gray-800 bg-gray-50;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+}
