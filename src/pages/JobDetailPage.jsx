@@ -5,6 +5,7 @@ import { useParams, Link } from 'react-router-dom';
 const JobDetailPage = () => {
     const { id } = useParams();
     const [showApplyForm, setShowApplyForm] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Mock Data
     const job = {
@@ -170,7 +171,11 @@ const JobDetailPage = () => {
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Ứng tuyển ngay</h2>
                         <h3 className="text-ptit-red font-medium mb-6">{job.title}</h3>
 
-                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Nộp hồ sơ thành công!"); setShowApplyForm(false); }}>
+                        <form className="space-y-4" onSubmit={(e) => { 
+                            e.preventDefault(); 
+                            setShowApplyForm(false); 
+                            setShowSuccessModal(true);
+                        }}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                                 <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-ptit-red outline-none" placeholder="Nguyễn Văn A" required />
@@ -195,6 +200,44 @@ const JobDetailPage = () => {
                                 Nộp hồ sơ ứng tuyển
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Application Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[3rem] w-full max-w-lg p-12 text-center shadow-2xl animate-fade-in-up relative overflow-hidden">
+                        {/* Decorative Background Blob */}
+                        <div className="absolute -top-20 -right-20 w-60 h-60 bg-green-50 rounded-full blur-3xl opacity-50"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="w-24 h-24 bg-green-100 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-bounce transition-all">
+                                <CheckCircle size={48} />
+                            </div>
+                            
+                            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Nộp hồ sơ thành công!</h2>
+                            <p className="text-gray-500 font-medium mb-10 leading-relaxed">
+                                Chúc mừng! Hồ sơ của bạn đã được gửi đến <span className="text-gray-900 font-bold">{job.company}</span>. 
+                                Bạn có thể theo dõi tiến độ ứng tuyển ngay bây giờ.
+                            </p>
+                            
+                            <div className="flex flex-col gap-4">
+                                <Link 
+                                    to="/applied-jobs" 
+                                    className="w-full bg-ptit-red text-white font-black py-4 rounded-2xl hover:bg-ptit-darkred transition-all shadow-xl shadow-red-200 flex items-center justify-center gap-2 group"
+                                >
+                                    Xem việc làm đã nộp
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                <button 
+                                    onClick={() => setShowSuccessModal(false)}
+                                    className="w-full bg-gray-50 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-100 transition-all font-sans"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
