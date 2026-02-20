@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { 
   Search, Briefcase, MapPin, DollarSign, Clock, 
   ChevronRight, Calendar, CheckCircle2, AlertCircle, 
-  ArrowRight, Filter, SlidersHorizontal, LayoutGrid, List
+  ArrowRight, Filter, SlidersHorizontal, LayoutGrid, List, MessageSquare
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const AppliedJobsPage = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const navigate = useNavigate();
 
   // Mock Data for applied jobs
   const appliedJobs = [
@@ -20,8 +21,7 @@ const AppliedJobsPage = () => {
       location: "Hà Nội",
       appliedDate: "07/02/2026",
       status: "Đang xem xét",
-      statusColor: "blue",
-      progress: 30
+      statusColor: "blue"
     },
     {
       id: 2,
@@ -32,8 +32,7 @@ const AppliedJobsPage = () => {
       location: "Đà Nẵng",
       appliedDate: "05/02/2026",
       status: "Đã duyệt CV",
-      statusColor: "green",
-      progress: 60
+      statusColor: "green"
     },
     {
       id: 3,
@@ -44,8 +43,7 @@ const AppliedJobsPage = () => {
       location: "Hồ Chí Minh",
       appliedDate: "02/02/2026",
       status: "Đang phỏng vấn",
-      statusColor: "amber",
-      progress: 85
+      statusColor: "amber"
     }
   ];
 
@@ -70,7 +68,7 @@ const AppliedJobsPage = () => {
                 Trung tâm nghề nghiệp
               </div>
               <h1 className="text-4xl font-black text-gray-900 tracking-tight">Việc làm đã nộp</h1>
-              <p className="text-gray-500 mt-2 font-medium">Theo dõi trạng thái và tiến độ ứng tuyển của bạn</p>
+              <p className="text-gray-500 mt-2 font-medium">Theo dõi trạng thái ứng tuyển của bạn</p>
             </div>
             
             <div className="flex items-center gap-3">
@@ -152,21 +150,6 @@ const AppliedJobsPage = () => {
                     </div>
                   </div>
 
-                  {/* Progress Bar (List view only) */}
-                  {viewMode === 'list' && (
-                    <div className="hidden lg:block w-48 mr-8">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Tiến độ</span>
-                            <span className="text-[10px] font-black text-ptit-red">{item.progress}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-ptit-red to-orange-400 rounded-full transition-all duration-1000" 
-                                style={{ width: `${item.progress}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -176,12 +159,21 @@ const AppliedJobsPage = () => {
                     {item.status}
                 </div>
                 
-                <Link 
-                  to={`/job/${item.id}`} 
-                  className="w-10 h-10 bg-gray-950 text-white rounded-xl flex items-center justify-center hover:bg-ptit-red transition-all shadow-lg hover:shadow-red-500/20 active:scale-90"
-                >
-                    <ArrowRight size={20} />
-                </Link>
+                <div className="flex gap-2">
+                    <button 
+                      onClick={() => navigate(`/messages?contact=${item.id}`)}
+                      className="w-10 h-10 bg-white text-gray-900 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all shadow-sm active:scale-90"
+                      title="Nhắn tin với NTD"
+                    >
+                        <MessageSquare size={20} />
+                    </button>
+                    <Link 
+                      to={`/job/${item.id}`} 
+                      className="w-10 h-10 bg-gray-950 text-white rounded-xl flex items-center justify-center hover:bg-ptit-red transition-all shadow-lg hover:shadow-red-500/20 active:scale-90"
+                    >
+                        <ArrowRight size={20} />
+                    </Link>
+                </div>
               </div>
             </div>
           ))}

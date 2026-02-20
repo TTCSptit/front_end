@@ -4,8 +4,7 @@ import {
   Eye, Users, Calendar, MapPin, DollarSign, 
   MoreVertical, Plus, Search, Filter, Clock,
   CheckCircle, AlertCircle, XCircle, BarChart3,
-  Building2, Star, Trash2, Edit3, Zap, Briefcase,
-  Target
+  Building2, Star, Trash2, Edit3, Zap, Briefcase
 } from 'lucide-react';
 
 // Mock data for posted jobs
@@ -94,7 +93,6 @@ const RecruiterDashboardPage = () => {
   const navItems = [
     { icon: Briefcase, label: 'Tin tuyển dụng', path: '/recruiter/dashboard', active: true },
     { icon: BarChart3, label: 'Thống kê', path: '/recruiter/stats' },
-    { icon: Target, label: 'Nhu cầu tuyển dụng', path: '/recruiter/demand-report' },
     { icon: Building2, label: 'Hồ sơ công ty', path: '/recruiter/company-profile' },
     { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' }
   ];

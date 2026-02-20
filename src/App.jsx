@@ -22,6 +22,7 @@ import AppliedJobsPage from './pages/AppliedJobsPage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
 import RecruitmentDemandPage from './pages/RecruitmentDemandPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import MessagingPage from './pages/MessagingPage';
 import ChatBot from './components/ChatBot';
 
 function App() {
@@ -58,10 +59,11 @@ function App() {
         <Route path="/recruiter/stats" element={<RecruiterStatsPage />} />
         <Route path="/recruiter/edit-job/:jobId" element={<EditJobPage />} />
         <Route path="/recruiter/saved-candidates" element={<SavedCandidatesPage />} />
+        <Route path="/messages" element={<MessagingPage role="candidate" />} />
+        <Route path="/recruiter/messages" element={<MessagingPage role="recruiter" />} />
         <Route path="/applied-jobs" element={<AppliedJobsPage />} />
         <Route path="/profile" element={<CandidateProfilePage />} />
         <Route path="/market-demand" element={<RecruitmentDemandPage />} />
-        <Route path="/recruiter/demand-report" element={<RecruitmentDemandPage />} />
       </Routes>
       <ChatBot isOpen={isChatOpen} onToggle={toggleChat} />
     </Layout>

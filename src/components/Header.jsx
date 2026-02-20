@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Menu, X, User, Briefcase, Plus, LogOut } from 'lucide-react';
+import { Search, Menu, X, User, Briefcase, Plus, LogOut, MessageSquare } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Header = () => {
@@ -98,6 +98,14 @@ const Header = () => {
                     {userRole === 'recruiter' ? 'Nhà tuyển dụng' : 'Ứng viên'}
                   </span>
                 </div>
+                <Link 
+                  to={userRole === 'recruiter' ? '/recruiter/messages' : '/messages'} 
+                  className="p-2 text-gray-600 hover:text-ptit-red hover:bg-red-50 rounded-lg transition-all relative"
+                  title="Tin nhắn"
+                >
+                  <MessageSquare size={22} />
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-ptit-red rounded-full border-2 border-white"></span>
+                </Link>
                 <button 
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"

@@ -494,23 +494,6 @@ const CompanyDetailPage = () => {
                     </div>
                 </div>
 
-                {/* Culture Hint Card with Shine and Mesh */}
-                <div className={`bg-gradient-to-br ${activePlanId === 'premium' ? 'from-gray-900 to-amber-950 shadow-amber-500/20' : 'from-gray-950 to-red-950 shadow-red-500/20'} rounded-[3rem] p-10 text-white relative overflow-hidden group shadow-2xl cascade-item animate-shine`} style={{animationDelay: '0.5s'}}>
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-1000 blur-2xl"></div>
-                    <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/5 rounded-full group-hover:scale-125 transition-transform duration-1000 blur-3xl"></div>
-
-                    <div className={`w-16 h-16 rounded-2xl mb-8 flex items-center justify-center ${activePlanId === 'premium' ? 'bg-amber-500/20 border border-amber-500/30' : 'bg-white/10 border border-white/20'}`}>
-                        <Sparkles size={28} className={activePlanId === 'premium' ? 'text-amber-400' : 'text-white'} />
-                    </div>
-
-                    <h3 className="text-3xl font-black mb-6 relative z-10 tracking-tight leading-tight">Bạn muốn kiến tạo tương lai tại đây?</h3>
-                    <p className="text-base opacity-70 mb-10 relative z-10 leading-relaxed font-bold tracking-tight">Gia nhập đội ngũ nhân sự tài năng và cùng nhau chinh phục những đỉnh cao công nghệ mới toàn cầu.</p>
-
-                    <Link to="/" className={`w-full bg-white text-gray-900 font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-${theme.primary} hover:text-white transition-all transform active:scale-95 relative z-10 shadow-2xl group/link overflow-hidden`}>
-                        <div className="absolute inset-0 bg-white opacity-0 group-hover/link:opacity-10 transition-opacity"></div>
-                        Ứng tuyển ngay <ChevronRight size={22} className="group-hover/link:translate-x-2 transition-transform" />
-                    </Link>
-                </div>
 
                 {/* Verified Footer */}
                 <div className="text-center px-10 cascade-item opacity-50" style={{animationDelay: '0.6s'}}>

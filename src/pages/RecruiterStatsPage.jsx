@@ -169,21 +169,6 @@ const RecruiterStatsPage = () => {
               </div>
             </div>
 
-            {/* Industry Insights CTA */}
-            <div className="bg-gradient-to-br from-ptit-red to-ptit-darkred rounded-2xl p-8 text-white shadow-lg shadow-red-100 relative overflow-hidden group">
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-2">Phân tích Nhu cầu</h3>
-                <p className="text-red-50 text-sm mb-6 leading-relaxed"> Xem báo cáo chi tiết về nhu cầu tuyển dụng và xu hướng các ngành nghề hot nhất hiện nay.</p>
-                <Link 
-                  to="/recruiter/demand-report"
-                  className="z-20 relative inline-flex items-center gap-2 px-6 py-3 bg-white text-ptit-red font-bold rounded-xl hover:bg-red-50 transition-all transform hover:scale-105 active:scale-95 shadow-md no-underline"
-                >
-                  <BarChart3 size={20} />
-                  Xem báo cáo chi tiết
-                </Link>
-              </div>
-              <TrendingUp className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 rotate-12 group-hover:scale-110 transition-transform duration-500" />
-            </div>
           </div>
         </div>
       </div>

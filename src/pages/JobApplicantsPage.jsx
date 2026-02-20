@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Mail, Phone, Calendar, Download,
   Star, Clock, MapPin, Briefcase, Filter, Search,
@@ -67,6 +67,7 @@ const statusConfig = {
 
 const JobApplicantsPage = () => {
   const { jobId } = useParams();
+  const navigate = useNavigate();
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [savedIds, setSavedIds] = useState([]);
   const [showMsgModal, setShowMsgModal] = useState(false);
@@ -257,7 +258,7 @@ const JobApplicantsPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-2">
                     <button 
-                      onClick={() => setShowMsgModal(true)}
+                      onClick={() => navigate(`/recruiter/messages?contact=${selectedApplicant.id}`)}
                       className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md"
                     >
                       <MessageSquare size={18} />
