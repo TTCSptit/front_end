@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Clock, 
   FileText, Plus, X, Upload, CheckCircle,
-  Zap, AlertCircle, Sparkles, ArrowRight
+  Zap, AlertCircle, Sparkles, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -90,13 +90,20 @@ const PostJobPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-28 pb-20">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header & Plan Status */}
-        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Đăng tin tuyển dụng mới</h1>
-            <p className="text-gray-600">Thu hút nhân tài PTIT bằng những bản mô tả công việc chi tiết và hấp dẫn.</p>
+        <div className="mb-8">
+          <Link 
+            to="/recruiter/dashboard"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-ptit-red transition mb-4 font-medium"
+          >
+            <ArrowLeft size={20} />
+            Quay lại
+          </Link>
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Đăng tin tuyển dụng mới</h1>
+              <p className="text-gray-600">Thu hút nhân tài PTIT bằng những bản mô tả công việc chi tiết và hấp dẫn.</p>
+            </div>
           </div>
-          
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

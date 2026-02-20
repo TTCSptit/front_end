@@ -70,10 +70,10 @@ const EditJobPage = () => {
         <div className="mb-8">
           <Link 
             to="/recruiter/dashboard"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-ptit-red transition mb-4"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-ptit-red transition mb-4 font-medium"
           >
             <ArrowLeft size={20} />
-            Hủy chỉnh sửa
+            Quay lại
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Chỉnh sửa tin tuyển dụng</h1>
           <p className="text-gray-600 mt-1">Sửa nội dung cho tin ID: {jobId}</p>
