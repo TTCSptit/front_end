@@ -5,7 +5,7 @@ import Footer from './Footer';
 
 const Layout = ({ children }) => {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
 
   return (
     <div className="flex flex-col min-h-screen">

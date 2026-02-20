@@ -18,8 +18,10 @@ import CompanyProfilePage from './pages/CompanyProfilePage';
 import RecruiterStatsPage from './pages/RecruiterStatsPage';
 import EditJobPage from './pages/EditJobPage';
 import SavedCandidatesPage from './pages/SavedCandidatesPage';
-import RecruiterPricingPage from './pages/RecruiterPricingPage';
 import AppliedJobsPage from './pages/AppliedJobsPage';
+import CandidateProfilePage from './pages/CandidateProfilePage';
+import RecruitmentDemandPage from './pages/RecruitmentDemandPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ChatBot from './components/ChatBot';
 
 function App() {
@@ -41,6 +43,7 @@ function App() {
         <Route path="/home" element={<HomePage onChatOpen={openChatWithJob} />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/company/:id" element={<CompanyDetailPage />} />
         <Route path="/industries" element={<IndustriesPage />} />
         <Route path="/industry/:id" element={<IndustryDetailPage />} />
@@ -55,8 +58,10 @@ function App() {
         <Route path="/recruiter/stats" element={<RecruiterStatsPage />} />
         <Route path="/recruiter/edit-job/:jobId" element={<EditJobPage />} />
         <Route path="/recruiter/saved-candidates" element={<SavedCandidatesPage />} />
-        <Route path="/recruiter/pricing" element={<RecruiterPricingPage />} />
         <Route path="/applied-jobs" element={<AppliedJobsPage />} />
+        <Route path="/profile" element={<CandidateProfilePage />} />
+        <Route path="/market-demand" element={<RecruitmentDemandPage />} />
+        <Route path="/recruiter/demand-report" element={<RecruitmentDemandPage />} />
       </Routes>
       <ChatBot isOpen={isChatOpen} onToggle={toggleChat} />
     </Layout>

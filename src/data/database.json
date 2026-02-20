@@ -1,0 +1,135 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "email": "candidate@ptit.edu.vn",
+      "password": "password123",
+      "role": "candidate",
+      "fullName": "Nguyễn Văn A",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+    },
+    {
+      "id": "u2",
+      "email": "recruiter@fpt.com",
+      "password": "password123",
+      "role": "recruiter",
+      "fullName": "Trần Thị B",
+      "companyId": "c1"
+    }
+  ],
+  "companies": [
+    {
+      "id": "c1",
+      "name": "FPT Software",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/2/29/FPT_Software_Logo.png",
+      "industry": "Công nghệ thông tin",
+      "location": "Hà Nội",
+      "size": "30,000+ nhân viên",
+      "description": "FPT Software là công ty thành viên của FPT, tập đoàn công nghệ hàng đầu Việt Nam.",
+      "website": "https://fptsoftware.com"
+    },
+    {
+      "id": "c2",
+      "name": "Viettel Telecom",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Viettel_logo_2021.png",
+      "industry": "Viễn thông",
+      "location": "Hà Nội",
+      "size": "50,000+ nhân viên",
+      "description": "Tập đoàn Công nghiệp - Viễn thông Quân đội (Viettel) là một tập đoàn viễn thông và công nghệ hàng đầu.",
+      "website": "https://viettel.vn"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "j1",
+      "title": "Lập trình viên Java (Java Developer)",
+      "companyId": "c1",
+      "location": "Hà Nội",
+      "salary": "15 - 25 Triệu",
+      "type": "Full-time",
+      "experience": "1 - 2 năm",
+      "deadline": "2026-03-30",
+      "description": "Chúng tôi đang tìm kiếm lập trình viên Java tài năng...",
+      "requirements": ["Java Core", "Spring Boot", "MySQL"],
+      "benefits": ["Lương tháng 13", "Bảo hiểm sức khỏe", "Du lịch hàng năm"],
+      "status": "active",
+      "views": 342,
+      "applicationsCount": 18,
+      "createdAt": "2026-02-01",
+      "isFeatured": true
+    },
+    {
+      "id": "j2",
+      "title": "Thực tập sinh Marketing",
+      "companyId": "c2",
+      "location": "Hà Nội",
+      "salary": "Thỏa thuận",
+      "type": "Internship",
+      "experience": "Không yêu cầu",
+      "deadline": "2026-03-15",
+      "description": "Cơ hội thực tập trong môi trường chuyên nghiệp...",
+      "requirements": ["Sáng tạo", "Kỹ năng giao tiếp tốt"],
+      "benefits": ["Hỗ trợ thực tập", "Đào tạo bài bản"],
+      "status": "active",
+      "views": 156,
+      "applicationsCount": 12,
+      "createdAt": "2026-02-03",
+      "isFeatured": false
+    }
+  ],
+  "industries": [
+    { "id": "ind1", "name": "Công nghệ thông tin", "icon": "Briefcase" },
+    { "id": "ind2", "name": "Marketing", "icon": "TrendingUp" },
+    { "id": "ind3", "name": "Tài chính / Ngân hàng", "icon": "DollarSign" }
+  ],
+  "applications": [
+    {
+      "id": "a1",
+      "jobId": "j1",
+      "userId": "u1",
+      "appliedDate": "2026-02-07T12:00:00Z",
+      "status": "pending",
+      "resume": "cv_nguyen_van_a.pdf"
+    }
+  ],
+  "savedCandidates": [
+    {
+      "id": "sc1",
+      "recruiterId": "u2",
+      "candidateId": "u1",
+      "savedAt": "2026-02-05",
+      "candidateInfo": {
+        "name": "Nguyễn Văn A",
+        "role": "Senior Frontend Developer",
+        "location": "Hà Nội",
+        "experience": "4 năm"
+      }
+    }
+  ],
+  "recruiterStats": {
+    "u2": {
+      "totalJobs": 2,
+      "activeJobs": 2,
+      "totalViews": 498,
+      "totalApplications": 30
+    }
+  },
+  "news": [
+    {
+      "id": "n1",
+      "title": "Xu hướng tuyển dụng ngành IT năm 2026",
+      "category": "Thị trường lao động",
+      "date": "2026-02-05",
+      "summary": "Tác động của AI đối với việc làm trong ngành phần mềm..."
+    }
+  ],
+  "cvTemplates": [
+    {
+      "id": "t1",
+      "name": "Mẫu CV Cơ bản",
+      "category": "Classic",
+      "price": "Free",
+      "thumbnail": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400"
+    }
+  ]
+}

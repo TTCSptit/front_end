@@ -11,8 +11,8 @@ const CompanyDetailPage = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('about');
 
-  // Get active plan from storage for testing dynamic themes
-  const activePlanId = sessionStorage.getItem('recruiter_plan') || 'basic';
+  // Standard theme for all companies
+  const activePlanId = 'basic';
 
   const themes = {
     basic: {
@@ -56,10 +56,8 @@ const CompanyDetailPage = () => {
   const company = {
     name: "Tập đoàn ABC Technology",
     logo: "https://ui-avatars.com/api/?name=ABC+Tech&background=0D8ABC&color=fff&size=128",
-    banner: activePlanId === 'premium' 
-        ? "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
-        : "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1950&q=80",
-    slogan: activePlanId === 'premium' ? "Định nghĩa lại chuẩn mực công nghệ toàn cầu" : "Tiên phong công nghệ - Dẫn lối tương lai",
+    banner: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1950&q=80",
+    slogan: "Tiên phong công nghệ - Dẫn lối tương lai",
     description: "ABC Technology là tập đoàn công nghệ đa quốc gia hàng đầu Việt Nam, chuyên cung cấp các giải pháp phần mềm toàn diện và dịch vụ tư vấn chuyển đổi số. Với hơn 10 năm kinh nghiệm và mạng lưới khách hàng toàn cầu, chúng tôi tự hào mang đến những sản phẩm đột phá công nghệ, giúp đối nghiệp tối ưu hóa quy trình vận hành.\n\nTại ABC Tech, chúng tôi không chỉ xây dựng phần mềm, chúng tôi kiến tạo tương lai. Môi trường tại đây đề cao văn hóa minh bạch, thúc đẩy sự sáng tạo không giới hạn và hỗ trợ mọi cá nhân phát triển tối đa tiềm năng của mình thông qua các dự án tầm cỡ quốc tế.",
     founded: "2010",
     size: "500-1000 nhân viên",
@@ -123,49 +121,21 @@ const CompanyDetailPage = () => {
 
   return (
     <div className={`min-h-screen pb-20 font-sans ${theme.mesh} transition-colors duration-1000`}>
-      {/* Decorative Blobs for Premium/Pro */}
-      {activePlanId !== 'basic' && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className={`absolute -top-24 -left-20 w-96 h-96 rounded-full blur-[120px] opacity-20 bg-${theme.secondary}-400 animate-float`}></div>
-            <div className={`absolute top-1/2 -right-20 w-80 h-80 rounded-full blur-[100px] opacity-15 bg-${activePlanId === 'premium' ? 'indigo-400' : 'sky-400'} animate-float`} style={{animationDelay: '1s'}}></div>
-        </div>
-      )}
 
       {/* Hero Section with Glassmorphism Header Overlay */}
       <div className="relative h-[480px] w-full overflow-hidden">
         <img 
           src={company.banner} 
           alt="Company Banner" 
-          className={`w-full h-full object-cover transition-transform duration-[2000ms] ${activePlanId === 'premium' ? 'scale-110 hover:scale-115' : 'scale-105'}`}
+          className="w-full h-full object-cover scale-105"
         />
         <div className={`absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent`}></div>
-        
-        {/* Floating Stats or Badge */}
-        <div className="absolute top-24 right-10 hidden md:block animate-fade-in">
-            <div className={`backdrop-blur-xl border border-white/20 p-5 rounded-[2rem] text-white shadow-2xl ${activePlanId === 'premium' ? 'bg-amber-500/10' : 'bg-white/10'}`}>
-                <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl ${
-                        activePlanId === 'premium' ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/40 animate-shine' : 'bg-ptit-red shadow-black/20'
-                    }`}>
-                        <Award size={28} />
-                    </div>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-0.5">
-                            {activePlanId === 'premium' ? 'Platinum Employer' : 'Top Employer'}
-                        </div>
-                        <div className="text-xl font-black tracking-tight underline decoration-theme-primary/30 underline-offset-4">2026 Winner</div>
-                    </div>
-                </div>
-            </div>
-        </div>
       </div>
 
       <div className="container mx-auto px-4 -mt-36 relative z-10 transition-all duration-700">
         {/* Company Identity Card */}
         <div className={`bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-8 border border-white/50 flex flex-col md:flex-row items-center md:items-end gap-8 mb-10 transition-all hover:shadow-[0_48px_80px_-24px_rgba(0,0,0,0.15)] ${activePlanId === 'premium' ? 'animate-shine' : ''}`}>
-          <div className={`w-44 h-44 md:w-56 md:h-56 rounded-[2rem] bg-white p-5 shadow-2xl flex-shrink-0 -mt-20 sm:-mt-28 border-8 transition-all hover:scale-105 duration-700 relative group ${
-              activePlanId === 'premium' ? 'border-amber-400 animate-border-glow' : 'border-white'
-          }`}>
+          <div className="w-44 h-44 md:w-56 md:h-56 rounded-[2rem] bg-white p-5 shadow-2xl flex-shrink-0 -mt-20 sm:-mt-28 border-8 transition-all hover:scale-105 duration-700 relative group border-white">
             <img 
               src={company.logo} 
               alt={company.name} 
@@ -199,7 +169,7 @@ const CompanyDetailPage = () => {
           </div>
 
           <div className="flex flex-col gap-4 w-full md:w-auto pb-4">
-            <button className={`bg-${theme.primary} hover:opacity-90 text-white font-black py-5 px-12 rounded-[1.5rem] transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] flex items-center justify-center gap-3 group active:scale-95 animate-shine`}>
+            <button className={`bg-${theme.primary} hover:opacity-90 text-white font-black py-5 px-12 rounded-[1.5rem] transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] flex items-center justify-center gap-3 group active:scale-95`}>
               <Star size={22} className="group-hover:fill-current group-hover:rotate-12 transition-transform" />
               Theo dõi công ty
             </button>
@@ -213,7 +183,7 @@ const CompanyDetailPage = () => {
             </div>
           </div>
         </div>
-      </div> {/* Closing div for the container starting at line 119 */}
+      </div>
 
       <div className="container mx-auto px-4 pb-20 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -366,7 +336,7 @@ const CompanyDetailPage = () => {
                                         <div className={`relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl border-2 ${activePlanId === 'premium' ? 'border-amber-100' : 'border-transparent hover:border-white/50'} transition-all`}>
                                             <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt={p.name} />
                                             <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/20 to-transparent flex items-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                                                <button className={`bg-white text-gray-900 font-black py-4 px-8 rounded-2xl flex items-center gap-3 text-sm shadow-2xl transition-all hover:bg-${theme.primary} hover:text-white group/btn animate-shine`}>
+                                                <button className={`bg-white text-gray-900 font-black py-4 px-8 rounded-2xl flex items-center gap-3 shadow-2xl transition-all hover:bg-${theme.primary} hover:text-white group/btn animate-shine`}>
                                                     Chi tiết dự án <ChevronRight size={18} />
                                                 </button>
                                             </div>

@@ -4,7 +4,8 @@ import {
   Eye, Users, Calendar, MapPin, DollarSign, 
   MoreVertical, Plus, Search, Filter, Clock,
   CheckCircle, AlertCircle, XCircle, BarChart3,
-  Building2, Star, CreditCard, Trash2, Edit3, Zap, Briefcase
+  Building2, Star, Trash2, Edit3, Zap, Briefcase,
+  Target
 } from 'lucide-react';
 
 // Mock data for posted jobs
@@ -78,7 +79,14 @@ const RecruiterDashboardPage = () => {
     }
   };
 
+  const FEATURED_LIMIT = 3;
+
   const handleBoost = (id) => {
+    const featuredCount = jobs.filter(j => j.isFeatured).length;
+    if (featuredCount >= FEATURED_LIMIT) {
+      alert(`Bạn đã đạt giới hạn ${FEATURED_LIMIT} tin nổi bật. Vui lòng gỡ bớt tin nổi bật khác để tiếp tục.`);
+      return;
+    }
     setJobs(jobs.map(j => j.id === id ? { ...j, isFeatured: true } : j));
     alert('Đã đẩy tin lên mục nổi bật!');
   };
@@ -86,9 +94,9 @@ const RecruiterDashboardPage = () => {
   const navItems = [
     { icon: Briefcase, label: 'Tin tuyển dụng', path: '/recruiter/dashboard', active: true },
     { icon: BarChart3, label: 'Thống kê', path: '/recruiter/stats' },
+    { icon: Target, label: 'Nhu cầu tuyển dụng', path: '/recruiter/demand-report' },
     { icon: Building2, label: 'Hồ sơ công ty', path: '/recruiter/company-profile' },
-    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' },
-    { icon: CreditCard, label: 'Gói dịch vụ', path: '/recruiter/pricing' }
+    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' }
   ];
 
   return (
@@ -114,47 +122,6 @@ const RecruiterDashboardPage = () => {
               ))}
             </div>
 
-            {/* Plan Status Card */}
-            {(() => {
-                const activePlanId = sessionStorage.getItem('recruiter_plan') || 'basic';
-                const planConfigs = {
-                    basic: { name: 'Cơ bản', total: 3 },
-                    pro: { name: 'Nâng cao', total: 15 },
-                    premium: { name: 'Premium', total: 999 }
-                };
-                const plan = planConfigs[activePlanId] || planConfigs.basic;
-                const used = 2; // Mock usage
-                
-                return (
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 overflow-hidden relative group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -translate-y-1/2 translate-x-1/2 -z-10 group-hover:scale-110 transition-transform"></div>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-red-100 text-ptit-red rounded-xl flex items-center justify-center">
-                                <Zap size={20} fill="currentColor" />
-                            </div>
-                            <div>
-                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Plan</div>
-                                <div className="font-bold text-gray-900">Gói {plan.name}</div>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-xs font-medium">
-                                <span className="text-gray-600">Lượt đăng tin</span>
-                                <span className="text-gray-900">{used}/{plan.total === 999 ? '∞' : plan.total}</span>
-                            </div>
-                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-ptit-red rounded-full"
-                                    style={{ width: `${(used / plan.total) * 100}%` }}
-                                ></div>
-                            </div>
-                        </div>
-                        <Link to="/recruiter/pricing" className="mt-4 flex items-center justify-center gap-2 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition">
-                            Nâng cấp ngay
-                        </Link>
-                    </div>
-                );
-            })()}
           </div>
 
           {/* Main Content */}

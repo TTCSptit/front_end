@@ -69,38 +69,6 @@ const RecruiterPage = () => {
           </div>
         </section>
 
-        {/* Section 2: Hình thức (Forms) */}
-        <section id="hinh-thuc" className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">Đa dạng hình thức Tuyển dụng</h2>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { title: "Đăng tin Tiêu chuẩn", price: "Miễn phí", features: ["Hiển thị 30 ngày", "Tiếp cận 1000+ xem", "Hỗ trợ cơ bản"], color: "bg-gray-100", btn: "text-gray-700" },
-                { title: "Đăng tin Nổi bật", price: "500.000đ", features: ["Vị trí đầu trang", "Highlight đỏ nổi bật", "Gửi email cho ứng viên", "Hỗ trợ ưu tiên"], color: "bg-red-50", btn: "text-ptit-red" },
-                { title: "Gian hàng Doanh nghiệp", price: "2.000.000đ", features: ["Trang profile riêng", "Không giới hạn tin", "Quảng bá thương hiệu", "Phân tích dữ liệu"], color: "bg-blue-50", btn: "text-blue-600" },
-                { title: "Campus Recruitment", price: "Liên hệ", features: ["Tổ chức sự kiện", "Seminar công nghệ", "Tuyển tại trường", "Hợp tác đào tạo"], color: "bg-purple-50", btn: "text-purple-600" }
-              ].map((item, index) => (
-                <div key={index} className={`rounded-2xl p-6 ${item.color} relative overflow-hidden transition-all hover:-translate-y-2`}>
-                  <div className="relative z-10 h-full flex flex-col">
-                    <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                    <div className="text-3xl font-extrabold mb-6 text-gray-800">{item.price}</div>
-                    <ul className="space-y-3 mb-8 flex-grow">
-                      {item.features.map((feat, i) => (
-                        <li key={i} className="flex items-center text-sm font-medium opacity-80">
-                          <CheckCircle size={16} className="mr-2" /> {feat}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to="/recruiter/post-job" className={`w-full py-3 bg-white rounded-lg font-bold shadow-sm ${item.btn} hover:shadow-md transition text-center`}>
-                      Chọn gói này
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Section 3: Quy trình (Process) */}
         <section id="quy-trinh" className="py-20 bg-gray-50">

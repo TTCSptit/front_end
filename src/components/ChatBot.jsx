@@ -8,7 +8,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
   
   const getInitialMessage = () => {
     if (isRecruiter) {
-      return { id: 1, text: "Xin chào! Tôi là Admin hỗ trợ nhà tuyển dụng. Bạn cần tư vấn về gói dịch vụ, đăng tin, hay quản lý ứng viên?", sender: 'bot', timestamp: new Date() };
+      return { id: 1, text: "Xin chào! Tôi là Admin hỗ trợ nhà tuyển dụng. Bạn cần hỗ trợ về đăng tin, hay quản lý ứng viên?", sender: 'bot', timestamp: new Date() };
     }
     return { id: 1, text: "Xin chào! Tôi là trợ lý ảo PTIT Jobs. Tôi có thể giúp gì cho bạn hôm nay?", sender: 'bot', timestamp: new Date() };
   };
@@ -50,9 +50,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
       if (isRecruiter) {
         // Recruiter-specific responses
-        if (lowerInput.includes('gói') || lowerInput.includes('giá') || lowerInput.includes('dịch vụ')) {
-          botResponseText = "Chúng tôi có 3 gói dịch vụ: Cơ bản (500K), Nâng cao (1.5M), và Premium (3M). Bạn muốn tìm hiểu gói nào?";
-        } else if (lowerInput.includes('đăng tin') || lowerInput.includes('post')) {
+        if (lowerInput.includes('đăng tin') || lowerInput.includes('post')) {
           botResponseText = "Để đăng tin, bạn có thể vào Quản lý tin → Đăng tin mới. Tin sẽ được duyệt trong 24h. Cần hỗ trợ thêm không?";
         } else if (lowerInput.includes('ứng viên') || lowerInput.includes('cv')) {
           botResponseText = "Bạn có thể xem danh sách ứng viên trong mục Quản lý tin → chọn tin → Xem ứng viên. Có thể lọc theo trạng thái!";
@@ -61,7 +59,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
         } else if (lowerInput.includes('xin chào') || lowerInput.includes('hi') || lowerInput.includes('hello')) {
           botResponseText = "Chào bạn! Tôi sẵn sàng hỗ trợ bạn về tuyển dụng. Bạn cần tư vấn gì?";
         } else {
-          botResponseText = "Tôi có thể hỗ trợ về: gói dịch vụ, đăng tin, quản lý ứng viên, hoặc liên hệ hotline. Bạn cần gì?";
+          botResponseText = "Tôi có thể hỗ trợ về: đăng tin, quản lý ứng viên, hoặc liên hệ hotline. Bạn cần gì?";
         }
       } else {
         // Candidate responses

@@ -2,18 +2,14 @@ import React, { useState } from 'react';
 import { Download, Eye, Star, Filter } from 'lucide-react';
 
 const CVTemplatesPage = () => {
-    const [filter, setFilter] = useState('All');
-
     const templates = [
-        { id: 1, name: 'CV Sinh viên / Thực tập', image: 'https://marketplace.canva.com/EAFRuCp3DcY/1/0/1131w/canva-black-white-minimalist-cv-resume-f5JNR-K5jjw.jpg', category: 'Student', downloads: 1205 },
-        { id: 2, name: 'CV Lập trình viên (IT)', image: 'https://d1csarkz8obe9u.cloudfront.net/posterpreviews/resume-cv-design-template-fe8c48a734e568ba454044199a5e828d_screen.jpg?ts=1658826555', category: 'IT', downloads: 3420 },
-        { id: 3, name: 'CV Marketing / Sáng tạo', image: 'https://cdn.venngage.com/template/thumbnail/small/b93557e8-3487-4348-8123-575a7b67b93f.webp', category: 'Marketing', downloads: 2100 },
-        { id: 4, name: 'CV Quản lý / Senior', image: 'https://marketplace.canva.com/EAFcO7D2Zms/1/0/1131w/canva-grey-clean-professional-resume-J-7vK2w5v2Y.jpg', category: 'Senior', downloads: 890 },
-        { id: 5, name: 'CV Tiếng Anh chuẩn', image: 'https://cdn.enhancv.com/predefined-examples/software-engineer-resume-example-v4.jpg', category: 'English', downloads: 1540 },
-        { id: 6, name: 'CV Thiết kế đồ họa', image: 'https://images.pikbest.com/templates/20210518/bg/6fc5a2008779c.png!w700wp', category: 'Design', downloads: 1120 },
+        { id: 1, name: 'CV Sinh viên / Thực tập', image: 'https://marketplace.canva.com/EAFRuCp3DcY/1/0/1131w/canva-black-white-minimalist-cv-resume-f5JNR-K5jjw.jpg', downloads: 1205 },
+        { id: 2, name: 'CV Lập trình viên (IT)', image: 'https://d1csarkz8obe9u.cloudfront.net/posterpreviews/resume-cv-design-template-fe8c48a734e568ba454044199a5e828d_screen.jpg?ts=1658826555', downloads: 3420 },
+        { id: 3, name: 'CV Marketing / Sáng tạo', image: 'https://cdn.venngage.com/template/thumbnail/small/b93557e8-3487-4348-8123-575a7b67b93f.webp', downloads: 2100 },
+        { id: 4, name: 'CV Quản lý / Senior', image: 'https://marketplace.canva.com/EAFcO7D2Zms/1/0/1131w/canva-grey-clean-professional-resume-J-7vK2w5v2Y.jpg', downloads: 890 },
+        { id: 5, name: 'CV Tiếng Anh chuẩn', image: 'https://cdn.enhancv.com/predefined-examples/software-engineer-resume-example-v4.jpg', downloads: 1540 },
+        { id: 6, name: 'CV Thiết kế đồ họa', image: 'https://images.pikbest.com/templates/20210518/bg/6fc5a2008779c.png!w700wp', downloads: 1120 },
     ];
-
-    const filteredTemplates = filter === 'All' ? templates : templates.filter(t => t.category === filter);
 
     return (
         <div className="bg-gray-50 min-h-screen py-10">
@@ -25,26 +21,9 @@ const CVTemplatesPage = () => {
                     </p>
                 </div>
 
-                {/* Filters */}
-                <div className="flex flex-wrap justify-center gap-4 mb-10">
-                    {['All', 'Student', 'IT', 'Marketing', 'Senior', 'English', 'Design'].map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setFilter(cat)}
-                            className={`px-6 py-2 rounded-full font-medium transition-all ${
-                                filter === cat 
-                                ? 'bg-ptit-red text-white shadow-lg shadow-red-200' 
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                            }`}
-                        >
-                            {cat === 'All' ? 'Tất cả' : cat}
-                        </button>
-                    ))}
-                </div>
-
                 {/* Templates Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredTemplates.map((template) => (
+                    {templates.map((template) => (
                         <div key={template.id} className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
                             <div className="relative h-96 bg-gray-100 overflow-hidden">
                                 <img 
@@ -72,8 +51,7 @@ const CVTemplatesPage = () => {
                                         <span className="text-sm font-bold text-gray-700">4.9</span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-center text-sm text-gray-500">
-                                    <span>{template.category}</span>
+                                <div className="flex justify-end items-center text-sm text-gray-500">
                                     <span>{template.downloads.toLocaleString()} lượt tải</span>
                                 </div>
                             </div>

@@ -10,17 +10,6 @@ const PostJobPage = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   
-  // Get current plan from storage
-  const activePlanId = sessionStorage.getItem('recruiter_plan') || 'basic';
-  
-  // Map plan ID to capabilities
-  const planConfigs = {
-    basic: { name: 'Cơ bản', totalPosts: 3, canFeature: false },
-    pro: { name: 'Nâng cao', totalPosts: 15, canFeature: true },
-    premium: { name: 'Premium', totalPosts: 999, canFeature: true }
-  };
-  
-  const currentPlan = planConfigs[activePlanId] || planConfigs.basic;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -39,6 +28,17 @@ const PostJobPage = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    if (name === 'isFeatured' && checked) {
+      // Mock check for existing featured jobs (simulating 3 existing ones for demonstration if needed, 
+      // but here we just check against a mock constant or current state)
+      const mockFeaturedCount = 3; // Simulating limit reached
+      if (mockFeaturedCount >= 3) {
+        alert("Bạn đã đạt giới hạn 3 tin nổi bật. Vui lòng quản lý tin đăng để gỡ bớt tin nổi bật trước khi tạo tin mới.");
+        return;
+      }
+    }
+
     setFormData(prev => ({ 
       ...prev, 
       [name]: type === 'checkbox' ? checked : value 
@@ -97,26 +97,6 @@ const PostJobPage = () => {
             <p className="text-gray-600">Thu hút nhân tài PTIT bằng những bản mô tả công việc chi tiết và hấp dẫn.</p>
           </div>
           
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 w-full md:w-auto">
-            <div className="w-12 h-12 bg-red-50 text-ptit-red rounded-xl flex items-center justify-center shrink-0">
-               <Zap size={24} fill="currentColor" />
-            </div>
-            <div className="flex-1">
-                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Gói hiện tại: {currentPlan.name}</div>
-                <div className="flex items-center gap-2 mt-0.5">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden w-24">
-                        <div 
-                          className="h-full bg-ptit-red rounded-full" 
-                          style={{ width: `${(1 / currentPlan.totalPosts) * 100}%` }}
-                        ></div>
-                    </div>
-                    <span className="text-sm font-bold text-gray-700">{1}/{currentPlan.totalPosts === 999 ? '∞' : currentPlan.totalPosts}</span>
-                </div>
-                <Link to="/recruiter/pricing" className="text-[10px] text-ptit-red font-bold hover:underline flex items-center gap-0.5 mt-1">
-                    Nâng cấp để đăng thêm <ArrowRight size={10} />
-                </Link>
-            </div>
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -254,12 +234,10 @@ const PostJobPage = () => {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 shadow-xl text-white">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <Sparkles size={20} className="text-yellow-400" />
-              Tính năng nổi bật (Dành cho gói Pro/Premium)
+              Tính năng nổi bật
             </h2>
             
-            <div className={`p-6 rounded-2xl border-2 transition-all ${
-              currentPlan.canFeature ? 'border-yellow-400 bg-white/5' : 'border-white/10 opacity-60 grayscale'
-            }`}>
+            <div className="p-6 rounded-2xl border-2 transition-all border-yellow-400 bg-white/5">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 font-bold text-lg mb-1">
@@ -275,10 +253,9 @@ const PostJobPage = () => {
                         <input 
                             type="checkbox" 
                             name="isFeatured"
-                            disabled={!currentPlan.canFeature}
                             checked={formData.isFeatured}
                             onChange={handleChange}
-                            className="SR-only opacity-0 absolute inset-0 cursor-pointer disabled:cursor-not-allowed"
+                            className="SR-only opacity-0 absolute inset-0 cursor-pointer"
                         />
                         <div className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
                            formData.isFeatured ? 'translate-x-6 bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-white'
@@ -286,12 +263,6 @@ const PostJobPage = () => {
                     </div>
                 </div>
                 
-                {!currentPlan.canFeature && (
-                    <div className="mt-4 p-3 bg-white/10 rounded-xl flex items-center gap-3 text-sm text-yellow-300">
-                        <AlertCircle size={18} />
-                        <span>Bạn đang ở gói **Cơ bản**. Hãy <Link to="/recruiter/pricing" className="underline font-bold">nâng cấp</Link> để sử dụng tính năng này.</span>
-                    </div>
-                )}
             </div>
           </div>
 
@@ -314,7 +285,7 @@ const PostJobPage = () => {
           <div className="flex items-center justify-end gap-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky bottom-6 z-10">
             <button 
               type="button"
-              onClick={() => navigate('/recruiter')}
+              onClick={() => navigate('/recruiter/dashboard')}
               className="px-8 py-4 text-gray-600 font-bold hover:text-red-600 transition"
             >
               Hủy bỏ

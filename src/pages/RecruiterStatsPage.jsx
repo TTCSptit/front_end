@@ -149,22 +149,40 @@ const RecruiterStatsPage = () => {
           </div>
 
           {/* Top Jobs */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-6">
-              <BarChart3 size={20} className="text-ptit-red" />
-              <h3 className="text-lg font-bold text-gray-900">Tin tuyển dụng hàng đầu</h3>
-            </div>
-            <div className="space-y-4">
-              {topJobs.map((job, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-xl">
-                  <div className="font-medium text-gray-900 mb-2 truncate">{job.title}</div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{job.views.toLocaleString()} views</span>
-                    <span className="text-gray-500">{job.applications} CV</span>
-                    <span className="text-green-600 font-medium">{job.conversion}%</span>
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-6">
+                <BarChart3 size={20} className="text-ptit-red" />
+                <h3 className="text-lg font-bold text-gray-900">Tin tuyển dụng hàng đầu</h3>
+              </div>
+              <div className="space-y-4">
+                {topJobs.map((job, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-xl">
+                    <div className="font-medium text-gray-900 mb-2 truncate">{job.title}</div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">{job.views.toLocaleString()} views</span>
+                      <span className="text-gray-500">{job.applications} CV</span>
+                      <span className="text-green-600 font-medium">{job.conversion}%</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Industry Insights CTA */}
+            <div className="bg-gradient-to-br from-ptit-red to-ptit-darkred rounded-2xl p-8 text-white shadow-lg shadow-red-100 relative overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-xl font-bold mb-2">Phân tích Nhu cầu</h3>
+                <p className="text-red-50 text-sm mb-6 leading-relaxed"> Xem báo cáo chi tiết về nhu cầu tuyển dụng và xu hướng các ngành nghề hot nhất hiện nay.</p>
+                <Link 
+                  to="/recruiter/demand-report"
+                  className="z-20 relative inline-flex items-center gap-2 px-6 py-3 bg-white text-ptit-red font-bold rounded-xl hover:bg-red-50 transition-all transform hover:scale-105 active:scale-95 shadow-md no-underline"
+                >
+                  <BarChart3 size={20} />
+                  Xem báo cáo chi tiết
+                </Link>
+              </div>
+              <TrendingUp className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 rotate-12 group-hover:scale-110 transition-transform duration-500" />
             </div>
           </div>
         </div>

@@ -1,14 +1,15 @@
 import React from 'react';
-import { TrendingUp, BarChart2 } from 'lucide-react';
+import { TrendingUp, BarChart2, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const MarketTrend = () => {
   const trends = [
-    { name: "Lập trình Web", jobs: 1240, growth: "+15%" },
-    { name: "Data Analyst", jobs: 850, growth: "+22%" },
-    { name: "Digital Marketing", jobs: 1100, growth: "+8%" },
-    { name: "Kế toán tổng hợp", jobs: 600, growth: "+5%" },
-    { name: "Quản trị mạng", jobs: 450, growth: "+10%" },
-    { name: "Tester / QA / QC", jobs: 900, growth: "+12%" },
+    { name: "Lập trình Web", jobs: 1240, growth: "+15%", hot: true },
+    { name: "Data Analyst", jobs: 850, growth: "+22%", hot: true },
+    { name: "Digital Marketing", jobs: 1100, growth: "+8%", hot: false },
+    { name: "Kế toán tổng hợp", jobs: 600, growth: "+5%", hot: false },
+    { name: "Quản trị mạng", jobs: 450, growth: "+10%", hot: false },
+    { name: "Tester / QA / QC", jobs: 900, growth: "+12%", hot: false },
   ];
 
   return (
@@ -27,14 +28,20 @@ const MarketTrend = () => {
                  <p className="text-gray-500 mb-8">
                     Cập nhật liên tục các nhóm ngành đang "khát" nhân lực để bạn nắm bắt cơ hội nghề nghiệp tốt nhất.
                  </p>
-                 <a href="#" className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-ptit-red transition-all shadow-lg hover:shadow-red-200">
+                 <Link to="/market-demand" className="px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-ptit-red transition-all shadow-lg hover:shadow-red-200 inline-block">
                     Xem báo cáo chi tiết
-                 </a>
+                 </Link>
              </div>
 
              <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
                  {trends.map((trend, idx) => (
-                     <div key={idx} className="bg-gray-50 border border-gray-100 p-5 rounded-xl hover:shadow-lg hover:border-red-100 transition-all cursor-pointer group">
+                     <div key={idx} className="bg-gray-50 border border-gray-100 p-5 rounded-xl hover:shadow-lg hover:border-red-100 transition-all cursor-pointer group relative overflow-hidden">
+                        {trend.hot && (
+                          <div className="absolute top-0 right-0 bg-ptit-red text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg flex items-center gap-1">
+                            <Zap size={10} fill="currentColor" />
+                            HOT
+                          </div>
+                        )}
                         <div className="flex justify-between items-start mb-4">
                            <BarChart2 className="text-gray-400 group-hover:text-ptit-red transition-colors" />
                            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">{trend.growth}</span>
