@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const ChatBot = ({ isOpen, onToggle }) => {
@@ -17,6 +17,41 @@ const ChatBot = ({ isOpen, onToggle }) => {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    e.target.value = ''; // Reset input
+
+    const newUserMessage = {
+      id: messages.length + 1,
+      text: `${file.name}`,
+      sender: 'user',
+      isFile: true,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, newUserMessage]);
+    setIsTyping(true);
+
+    // Mock analysis response
+    setTimeout(() => {
+      const botResponseText = `Cảm ơn bạn đã tải lên CV: **${file.name}**!\n\nDựa trên phân tích kỹ năng và kinh nghiệm trong CV, tôi thấy bạn rất phù hợp với các định hướng sau:\n\n1. Web Developer\n   - Phù hợp với kỹ năng lập trình web hiện tại.\n   - Cơ hội từ junior đến mid-level rất đa dạng.\n\n2. UI/UX Designer\n   - Dựa trên nền tảng thiết kế và tư duy sản phẩm.\n   - Có thể kết hợp kỹ năng code frontend để làm lợi thế.\n\nBạn có muốn tôi tìm một số việc làm cụ thể đang tuyển dụng cho các vị trí này không?`;
+      
+      const newBotMessage = {
+        id: messages.length + 2,
+        text: botResponseText,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, newBotMessage]);
+      scrollToBottom();
+      setIsTyping(false);
+    }, 2500);
+  };
 
   // const toggleChat = () => setIsOpen(!isOpen);
 
@@ -129,7 +164,14 @@ const ChatBot = ({ isOpen, onToggle }) => {
                       : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{msg.text}</p>
+                  {msg.isFile ? (
+                    <div className="flex items-center gap-2">
+                       <FileText size={16} className="text-white" />
+                       <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                  )}
                   <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -152,6 +194,25 @@ const ChatBot = ({ isOpen, onToggle }) => {
           {/* Input Area */}
           <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-gray-100">
             <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-red-100 transition-all">
+              {!isRecruiter && (
+                <>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    className="hidden" 
+                    accept=".pdf,.doc,.docx"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
+                    title="Đính kèm CV để phân tích"
+                  >
+                    <Paperclip size={18} />
+                  </button>
+                </>
+              )}
               <input
                 type="text"
                 value={inputValue}
