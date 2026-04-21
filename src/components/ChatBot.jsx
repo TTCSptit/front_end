@@ -38,7 +38,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
     // Mock analysis response
     setTimeout(() => {
-      const botResponseText = `Cảm ơn bạn đã tải lên CV: **${file.name}**!\n\nDựa trên phân tích kỹ năng và kinh nghiệm trong CV, tôi thấy bạn rất phù hợp với các định hướng sau:\n\n1. Web Developer\n   - Phù hợp với kỹ năng lập trình web hiện tại.\n   - Cơ hội từ junior đến mid-level rất đa dạng.\n\n2. UI/UX Designer\n   - Dựa trên nền tảng thiết kế và tư duy sản phẩm.\n   - Có thể kết hợp kỹ năng code frontend để làm lợi thế.\n\nBạn có muốn tôi tìm một số việc làm cụ thể đang tuyển dụng cho các vị trí này không?`;
+      const botResponseText = `Cảm ơn bạn đã tải lên CV: **${file.name}**!\n\nDựa trên phân tích kỹ năng, tôi thấy bạn rất tiềm năng. Đây là lộ trình học tập & phát triển tôi thiết kế riêng cho định hướng Web Developer của bạn:\n\n[ROADMAP] Nâng cao ReactJS, Học thêm Node.js cốt lõi, Tìm hiểu Kiến trúc Microservices, Luyện tập thuật toán phỏng vấn [/ROADMAP]\n\nBạn có muốn tôi tìm một số việc làm phù hợp với lộ trình này không?`;
       
       const newBotMessage = {
         id: messages.length + 2,
@@ -59,9 +59,25 @@ const ChatBot = ({ isOpen, onToggle }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOpen]);
+  const submitProgrammaticMessage = (textMessage) => {
+    const newUserMessage = {
+      id: messages.length + 1,
+      text: textMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, newUserMessage]);
+    setIsTyping(true);
+    
+    setTimeout(() => {
+      let botResponseText = "Tuyệt vời, hệ thống đã nộp kết quả của bạn thành công!";
+      const newBotMessage = { id: messages.length + 2, text: botResponseText, sender: 'bot', timestamp: new Date() };
+      setMessages(prev => [...prev, newBotMessage]);
+      scrollToBottom();
+      setIsTyping(false);
+    }, 1500);
+  };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -100,12 +116,18 @@ const ChatBot = ({ isOpen, onToggle }) => {
         // Candidate responses
         if (lowerInput.includes('tìm việc') || lowerInput.includes('job') || lowerInput.includes('công việc')) {
           botResponseText = "Tôi có thể giúp bạn tìm việc! Bạn đang quan tâm đến vị trí nào? (Developer, Designer, Marketing...)";
+        } else if (lowerInput.includes('lộ trình') || lowerInput.includes('roadmap') || lowerInput.includes('học')) {
+          botResponseText = "Đây là lộ trình mẫu tôi thiết kế tự động cho bạn bằng Generative UI:\n\n[ROADMAP] JavaScript Cơ bản, ReactJS & Tailwind, Tối ưu Web Performance, Giải thuật & Phỏng vấn [/ROADMAP]\n\nBạn muốn bắt đầu từ mốc nào?";
         } else if (lowerInput.includes('lương') || lowerInput.includes('salary')) {
           botResponseText = "Mức lương cho các vị trí phổ biến hiện tại dao động từ 10 - 30 triệu VNĐ tùy vào kinh nghiệm.";
         } else if (lowerInput.includes('liên hệ') || lowerInput.includes('contact')) {
           botResponseText = "Bạn có thể liên hệ với chúng tôi qua email: contact@ptitjobs.vn hoặc hotline: 1900 1234.";
         } else if (lowerInput.includes('xin chào') || lowerInput.includes('hi') || lowerInput.includes('hello')) {
-          botResponseText = "Chào bạn! Chúc bạn một ngày tốt lành. Cần tôi giúp tìm job ngon không?";
+          botResponseText = "Chào bạn! Gõ chữ 'lộ trình', 'quiz', hoặc 'code' để trải nghiệm các Component React trực tiếp trong chat nhé!";
+        } else if (lowerInput.includes('quiz') || lowerInput.includes('trắc nghiệm')) {
+          botResponseText = "Được thôi, cùng khởi động với câu hỏi này nhé:\n\n[QUIZ] Trong React, Hook nào được dùng để quản lý State? | useEffect | useMemo | useState | useContext [/QUIZ]";
+        } else if (lowerInput.includes('code') || lowerInput.includes('thử thách') || lowerInput.includes('bài tập')) {
+          botResponseText = "Tuyệt. Hãy hoàn thành bài tập ngay trong khung giao diện dưới đây:\n\n[CODE_EDITOR] Viết hàm isPalindrome(str) trả về true nếu chuỗi đối xứng. | javascript [/CODE_EDITOR]";
         }
       }
 
@@ -119,6 +141,89 @@ const ChatBot = ({ isOpen, onToggle }) => {
       setMessages(prev => [...prev, newBotMessage]);
       setIsTyping(false);
     }, 1500);
+  };
+
+  const renderMessageContent = (text) => {
+    const regex = /\[ROADMAP\]([\s\S]*?)\[\/ROADMAP\]|\[QUIZ\]([\s\S]*?)\[\/QUIZ\]|\[CODE_EDITOR\]([\s\S]*?)\[\/CODE_EDITOR\]/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex, match.index)}</span>);
+      }
+      
+      const rmMatch = match[1];
+      const qzMatch = match[2];
+      const cdMatch = match[3];
+
+      if (rmMatch) {
+        const nodes = rmMatch.split(',').map(n => n.trim()).filter(Boolean);
+        parts.push(
+          <div key={`rm-${match.index}`} className="mt-3 mb-2 p-3 bg-red-50 border border-red-100 rounded-xl overflow-hidden shadow-sm font-sans block w-[280px]">
+            <strong className="text-red-700 flex items-center gap-2 mb-2 text-sm">
+               ⚡ Lộ trình cá nhân hóa:
+            </strong>
+            <div className="flex flex-col gap-2">
+              {nodes.map((node, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 bg-white border border-red-100 rounded-lg cursor-pointer hover:border-red-400 hover:shadow-sm transition-all" onClick={() => alert(`Tương tác: ${node}`)}>
+                  <div className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
+                  <span className="text-[13px] font-medium text-gray-700 leading-tight">{node}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (qzMatch) {
+         const elements = qzMatch.split('|').map(n => n.trim());
+         const question = elements[0];
+         const options = elements.slice(1);
+         parts.push(
+           <div key={`qz-${match.index}`} className="mt-3 mb-2 p-3 bg-green-50 border border-green-200 rounded-xl overflow-hidden shadow-sm font-sans block w-[280px]">
+             <strong className="text-green-700 flex items-center gap-2 mb-2 text-sm">⚡ Trắc nghiệm Nhanh:</strong>
+             <p className="text-sm font-medium mb-3 text-gray-800 break-words">{question}</p>
+             <div className="flex flex-col gap-2">
+               {options.map((opt, i) => {
+                 const letter = String.fromCharCode(65 + i);
+                 return (
+                 <button key={i} onClick={() => submitProgrammaticMessage(`Tôi chọn phương án ${letter}:\n${opt}`)} className="text-left w-full items-center gap-3 p-2 bg-white border border-green-100 rounded-lg cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all font-sans">
+                   <span className="text-green-600 font-bold mr-2">{letter}.</span>
+                   <span className="text-[13px] font-medium text-gray-700">{opt}</span>
+                 </button>
+               )})}
+             </div>
+           </div>
+         );
+      } else if (cdMatch) {
+         const elements = cdMatch.split('|').map(n => n.trim());
+         const promptText = elements[0];
+         const lang = elements[1] || 'python';
+         parts.push(
+           <div key={`cd-${match.index}`} className="mt-3 mb-2 p-3 bg-gray-900 border border-gray-700 rounded-xl overflow-hidden shadow-xl font-sans block w-[280px]">
+             <strong className="text-gray-100 flex items-center gap-2 mb-2 text-sm">⚡ Thử thách Code ({lang})</strong>
+             <p className="text-xs font-medium mb-3 text-gray-300 break-words">{promptText}</p>
+             <textarea id={`code-editor-${match.index}`} className="w-full h-24 bg-black text-green-400 p-2 rounded-md text-xs font-mono outline-none border border-gray-700 mb-2 resize-none" placeholder="// Code here..."></textarea>
+             <button onClick={() => {
+                 const textarea = document.getElementById(`code-editor-${match.index}`);
+                 if(!textarea.value.trim()) return alert('Bạn chưa viết code!');
+                 submitProgrammaticMessage(`Bài giải của tôi bằng ${lang}:\n\n${textarea.value.trim()}`);
+                 textarea.value = '';
+             }} className="w-full flex justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-xs font-bold transition-all shadow-md">
+                Chạy Code & Nộp bài
+             </button>
+           </div>
+         );
+      }
+      
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex)}</span>);
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   return (
@@ -170,7 +275,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
                        <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
                     </div>
                   ) : (
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                    <div className="text-sm leading-relaxed whitespace-pre-line break-words">{renderMessageContent(msg.text)}</div>
                   )}
                   <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
