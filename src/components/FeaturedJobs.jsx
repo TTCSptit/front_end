@@ -1,65 +1,27 @@
 import React from 'react';
 import JobCard from './JobCard';
 import { ArrowRight } from 'lucide-react';
+import { getFeaturedJobs } from '../services/api';
 
 const FeaturedJobs = ({ onChatOpen }) => {
-  // Dummy data
-  const jobs = [
-    {
-       id: 1,
-       title: "Lập trình viên Java (Java Developer)",
-       company: "FPT Software",
-       location: "Hà Nội",
-       salary: "15 - 25 Triệu",
-       deadline: "30/03/2026",
-       logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/FPT_Software_Logo.png"
-    },
-    {
-       id: 2,
-       title: "Thực tập sinh Marketing / Content Creator",
-       company: "Viettel Telecom",
-       location: "Hà Nội",
-       salary: "Thỏa thuận",
-       deadline: "15/03/2026",
-       logo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Viettel_logo_2021.png"
-    },
-    {
-       id: 3,
-       title: "Kỹ sư hệ thống mạng (Network Engineer)",
-       company: "VNPT Technology",
-       location: "Hà Nội",
-       salary: "12 - 20 Triệu",
-       deadline: "20/03/2026",
-       logo: "https://vnpt-technology.vn/wp-content/uploads/2023/07/Logo-VNPT-Technology-01-e1688528994519.png"
-    },
-    {
-       id: 4,
-       title: "Senior ReactJS/NodeJS Developer",
-       company: "CMC Global",
-       location: "TP. HCM",
-       salary: "Up to $2000",
-       deadline: "01/04/2026",
-       logo: "https://inkythuatso.com/uploads/images/2021/11/logo-cmc-corp-inkythuatso-01-13-16-17-06.jpg"
-    },
-    {
-        id: 5,
-        title: "Chuyên viên ATTT (Security Specialist)",
-        company: "VCS - Viettel Cyber Security",
-        location: "Hà Nội",
-        salary: "20 - 35 Triệu",
-        deadline: "10/04/2026",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Viettel_logo_2021.png"
-    },
-    {
-        id: 6,
-        title: "Tuyển dụng Fresh Mobile Developer (iOS/Android)",
-        company: "MISA JSC",
-        location: "Hà Nội",
-        salary: "10 - 15 Triệu",
-        deadline: "25/03/2026",
-        logo: "https://misa.vn/wp-content/uploads/2020/10/logo-misa.png"
-    }
-  ];
+  const [jobs, setJobs] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchFeaturedJobs = async () => {
+      try {
+        const data = await getFeaturedJobs(6);
+        setJobs(data || []);
+      } catch (error) {
+        console.error("Error fetching featured jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeaturedJobs();
+  }, []);
+
+  if (loading) return <div className="py-16 text-center text-gray-500">Đang tải việc làm nổi bật...</div>;
 
   return (
     <section className="py-16 bg-gray-50">

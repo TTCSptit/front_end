@@ -1,62 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Mail, Phone, Calendar, Download,
   Star, Clock, MapPin, Briefcase, Filter, Search,
   CheckCircle, XCircle, MessageSquare, Users
 } from 'lucide-react';
-
-// Mock applicants data
-const mockApplicants = [
-  {
-    id: 1,
-    name: 'Nguyễn Văn An',
-    email: 'nguyenvanan@ptit.edu.vn',
-    phone: '0901234567',
-    experience: '2 năm',
-    education: 'Học viện Công nghệ BCVT - CNTT',
-    appliedAt: '2026-02-05',
-    status: 'new',
-    skills: ['ReactJS', 'JavaScript', 'TailwindCSS'],
-    coverLetter: 'Tôi rất quan tâm đến vị trí này và tin rằng kinh nghiệm của tôi phù hợp với yêu cầu...'
-  },
-  {
-    id: 2,
-    name: 'Trần Thị Bình',
-    email: 'tranthiminh@ptit.edu.vn',
-    phone: '0912345678',
-    experience: '1 năm',
-    education: 'Học viện Công nghệ BCVT - ATTT',
-    appliedAt: '2026-02-04',
-    status: 'reviewed',
-    skills: ['Vue.js', 'TypeScript', 'Node.js'],
-    coverLetter: 'Với nền tảng vững chắc về phát triển web, tôi mong muốn đóng góp cho đội ngũ...'
-  },
-  {
-    id: 3,
-    name: 'Lê Hoàng Cường',
-    email: 'lehoangcuong@ptit.edu.vn',
-    phone: '0923456789',
-    experience: 'Fresher',
-    education: 'Học viện Công nghệ BCVT - KTPM',
-    appliedAt: '2026-02-03',
-    status: 'shortlisted',
-    skills: ['React Native', 'Flutter', 'Firebase'],
-    coverLetter: 'Là sinh viên năm cuối với nhiều dự án thực tế, tôi sẵn sàng học hỏi và phát triển...'
-  },
-  {
-    id: 4,
-    name: 'Phạm Minh Đức',
-    email: 'phamminhduc@ptit.edu.vn',
-    phone: '0934567890',
-    experience: '3 năm',
-    education: 'Học viện Công nghệ BCVT - TMĐT',
-    appliedAt: '2026-02-02',
-    status: 'rejected',
-    skills: ['Angular', 'Java', 'Spring Boot'],
-    coverLetter: 'Tôi có kinh nghiệm làm việc tại các công ty công nghệ lớn và muốn thử thách bản thân...'
-  }
-];
+import { getJobApplications, updateApplicationStatus } from '../services/api';
 
 const statusConfig = {
   new: { label: 'Mới', color: 'bg-blue-100 text-blue-700' },
@@ -68,14 +17,61 @@ const statusConfig = {
 const JobApplicantsPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const [applicants, setApplicants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedApplicant, setSelectedApplicant] = useState(null);
-  const [savedIds, setSavedIds] = useState([]);
   const [showMsgModal, setShowMsgModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
-  const toggleSave = (id) => {
-    setSavedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      try {
+        const data = await getJobApplications(jobId);
+        setApplicants(data || []);
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách ứng viên.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchApplicants();
+  }, [jobId]);
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'Pending': return 'Mới';
+      case 'Accepted': return 'Quan tâm';
+      case 'Rejected': return 'Từ chối';
+      default: return status;
+    }
   };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Pending': return 'bg-blue-100 text-blue-700';
+      case 'Accepted': return 'bg-green-100 text-green-700';
+      case 'Rejected': return 'bg-red-100 text-red-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const handleStatusUpdate = async (applicationId, newStatus) => {
+    try {
+      await updateApplicationStatus({ applicationId, status: newStatus });
+      // Update local state
+      setApplicants(prev => prev.map(a => 
+        a.id === applicationId ? { ...a, status: newStatus } : a
+      ));
+      if (selectedApplicant?.id === applicationId) {
+        setSelectedApplicant(prev => ({ ...prev, status: newStatus }));
+      }
+      alert('Cập nhật trạng thái thành công!');
+    } catch (err) {
+      alert(err.message || 'Cập nhật trạng thái thất bại.');
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
@@ -90,28 +86,32 @@ const JobApplicantsPage = () => {
             Quay lại
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Danh sách Ứng viên</h1>
-          <p className="text-gray-600 mt-1">Senior Frontend Developer (ReactJS) • {mockApplicants.length} ứng viên</p>
+          <p className="text-gray-600 mt-1">Senior Frontend Developer (ReactJS) • {applicants.length} ứng viên</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-gray-900">{mockApplicants.length}</div>
+            <div className="text-2xl font-bold text-gray-900">{applicants.length}</div>
             <div className="text-sm text-gray-500">Tổng ứng viên</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-blue-600">{mockApplicants.filter(a => a.status === 'new').length}</div>
+            <div className="text-2xl font-bold text-blue-600">{applicants.filter(a => a.status === 'Pending').length}</div>
             <div className="text-sm text-gray-500">Chưa xem</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-green-600">{mockApplicants.filter(a => a.status === 'shortlisted').length}</div>
+            <div className="text-2xl font-bold text-green-600">{applicants.filter(a => a.status === 'Accepted').length}</div>
             <div className="text-sm text-gray-500">Quan tâm</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-red-600">{mockApplicants.filter(a => a.status === 'rejected').length}</div>
+            <div className="text-2xl font-bold text-red-600">{applicants.filter(a => a.status === 'Rejected').length}</div>
             <div className="text-sm text-gray-500">Từ chối</div>
           </div>
         </div>
+
+        {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">{error}</div>}
+        {loading && <div className="text-center py-10">Đang tải ứng viên...</div>}
+
 
         {/* Search & Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -133,7 +133,7 @@ const JobApplicantsPage = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* List */}
           <div className="lg:col-span-2 space-y-4">
-            {mockApplicants.map((applicant) => (
+            {!loading && applicants.map((applicant) => (
               <div 
                 key={applicant.id}
                 onClick={() => setSelectedApplicant(applicant)}
@@ -147,50 +147,26 @@ const JobApplicantsPage = () => {
                   {/* Avatar */}
                   <div className="relative">
                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-xl shrink-0">
-                      {applicant.name.charAt(0)}
+                      {(applicant.fullName || 'U').charAt(0)}
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSave(applicant.id);
-                      }}
-                      className={`absolute -top-1 -right-1 w-6 h-6 rounded-full border border-white flex items-center justify-center transition-all ${
-                        savedIds.includes(applicant.id) 
-                          ? 'bg-yellow-400 text-white' 
-                          : 'bg-white text-gray-400 hover:text-yellow-400'
-                      }`}
-                    >
-                      <Star size={12} fill={savedIds.includes(applicant.id) ? "currentColor" : "none"} />
-                    </button>
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-gray-900 truncate">{applicant.name}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[applicant.status].color}`}>
-                        {statusConfig[applicant.status].label}
+                      <h3 className="font-bold text-gray-900 truncate">{applicant.fullName}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(applicant.status)}`}>
+                        {getStatusLabel(applicant.status)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 mb-2">{applicant.education}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {applicant.skills.slice(0, 3).map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500 mb-2">{applicant.email}</p>
                   </div>
 
                   {/* Meta */}
                   <div className="text-right text-sm text-gray-400 shrink-0">
-                    <div className="flex items-center gap-1">
-                      <Briefcase size={14} />
-                      {applicant.experience}
-                    </div>
                     <div className="flex items-center gap-1 mt-1">
                       <Calendar size={14} />
-                      {applicant.appliedAt}
+                      {new Date(applicant.appliedAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -204,10 +180,9 @@ const JobApplicantsPage = () => {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28 animate-fade-in">
                 <div className="text-center mb-6">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4 shadow-lg">
-                    {selectedApplicant.name.charAt(0)}
+                    {selectedApplicant.fullName.charAt(0)}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">{selectedApplicant.name}</h3>
-                  <p className="text-gray-500 text-sm">{selectedApplicant.education}</p>
+                  <h3 className="text-xl font-bold text-gray-900">{selectedApplicant.fullName}</h3>
                 </div>
 
                 <div className="space-y-4 mb-6">
@@ -215,30 +190,6 @@ const JobApplicantsPage = () => {
                     <Mail size={16} className="text-gray-400" />
                     <span className="text-gray-700">{selectedApplicant.email}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Phone size={16} className="text-gray-400" />
-                    <span className="text-gray-700">{selectedApplicant.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Briefcase size={16} className="text-gray-400" />
-                    <span className="text-gray-700">Kinh nghiệm: {selectedApplicant.experience}</span>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="font-bold text-gray-900 mb-2">Kỹ năng</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedApplicant.skills.map((skill, i) => (
-                      <span key={i} className="px-3 py-1 bg-red-50 text-ptit-red text-sm rounded-full">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="font-bold text-gray-900 mb-2">Thư xin việc</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">{selectedApplicant.coverLetter}</p>
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -247,13 +198,27 @@ const JobApplicantsPage = () => {
                     Tải CV
                   </button>
                   <div className="grid grid-cols-2 gap-3">
-                    <button className="flex items-center justify-center gap-2 py-3 border-2 border-green-500 text-green-600 font-bold rounded-xl hover:bg-green-50 transition">
+                    <button 
+                      onClick={() => handleStatusUpdate(selectedApplicant.id, 'Accepted')}
+                      className={`flex items-center justify-center gap-2 py-3 border-2 font-bold rounded-xl transition ${
+                        selectedApplicant.status === 'Accepted' 
+                          ? 'bg-green-500 text-white border-green-500' 
+                          : 'border-green-500 text-green-600 hover:bg-green-50'
+                      }`}
+                    >
                       <CheckCircle size={18} />
-                      Quan tâm
+                      {selectedApplicant.status === 'Accepted' ? 'Đã duyệt' : 'Duyệt'}
                     </button>
-                    <button className="flex items-center justify-center gap-2 py-3 border-2 border-red-500 text-red-600 font-bold rounded-xl hover:bg-red-50 transition">
+                    <button 
+                      onClick={() => handleStatusUpdate(selectedApplicant.id, 'Rejected')}
+                      className={`flex items-center justify-center gap-2 py-3 border-2 font-bold rounded-xl transition ${
+                        selectedApplicant.status === 'Rejected' 
+                          ? 'bg-red-500 text-white border-red-500' 
+                          : 'border-red-500 text-red-600 hover:bg-red-50'
+                      }`}
+                    >
                       <XCircle size={18} />
-                      Từ chối
+                      {selectedApplicant.status === 'Rejected' ? 'Từ chối' : 'Từ chối'}
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-2">
@@ -283,56 +248,6 @@ const JobApplicantsPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Message Modal */}
-      {showMsgModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Gửi tin nhắn</h3>
-              <button 
-                onClick={() => setShowMsgModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition text-gray-500"
-              >
-                <XCircle size={24} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Người nhận</label>
-                <div className="px-4 py-3 bg-gray-50 rounded-xl text-gray-900 font-medium">
-                  {selectedApplicant?.name} ({selectedApplicant?.email})
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nội dung</label>
-                <textarea 
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition h-32 resize-none"
-                  placeholder="Nhập nội dung tin nhắn..."
-                ></textarea>
-              </div>
-            </div>
-            <div className="p-6 bg-gray-50 flex gap-3">
-              <button 
-                onClick={() => setShowMsgModal(false)}
-                className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={() => {
-                  alert('Đã gửi tin nhắn thành công!');
-                  setShowMsgModal(false);
-                }}
-                className="flex-1 py-3 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-100"
-              >
-                Gửi ngay
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Schedule Modal */}
       {showScheduleModal && (

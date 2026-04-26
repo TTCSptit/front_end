@@ -1,50 +1,49 @@
-import React, { useState } from 'react';
-import { MapPin, DollarSign, Clock, Building2, ChevronLeft, CheckCircle, Share2, Briefcase, Calendar, Upload } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, DollarSign, Clock, Building2, ChevronLeft, CheckCircle, Share2, Briefcase, Calendar, Upload, ArrowRight } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
+import { getJob, applyJob } from '../services/api';
 
 const JobDetailPage = () => {
     const { id } = useParams();
+    const [job, setJob] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [showApplyForm, setShowApplyForm] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [applying, setApplying] = useState(false);
 
-    // Mock Data
-    const job = {
-        title: "Senior Frontend Developer (React/Vue)",
-        company: "Tập đoàn ABC Technology",
-        salary: "20 - 35 Triệu",
-        location: "Hà Nội",
-        deadline: "30/04/2026",
-        logo: "https://ui-avatars.com/api/?name=ABC+Tech&background=0D8ABC&color=fff&size=128",
-        experience: "3-5 năm",
-        level: "Senior",
-        type: "Toàn thời gian",
-        description: `
-      Chúng tôi đang tìm kiếm một Senior Frontend Developer tài năng để tham gia vào đội ngũ phát triển sản phẩm của ABC Technology.
-      
-      Trách nhiệm chính:
-      - Thiết kế và phát triển các ứng dụng web sử dụng ReactJS hoặc VueJS.
-      - Tối ưu hóa hiệu năng ứng dụng để đảm bảo trải nghiệm người dùng tốt nhất.
-      - Phối hợp chặt chẽ với đội ngũ Backend và UI/UX Designer.
-      - Tham gia vào quá trình review code và đưa ra các giải pháp kỹ thuật.
-    `,
-        requirements: [
-            "Có ít nhất 3 năm kinh nghiệm làm việc với ReactJS hoặc VueJS.",
-            "Thành thạo JavaScript (ES6+), HTML5, CSS3.",
-            "Có kinh nghiệm với State Management (Redux, Vuex, Zustand...).",
-            "Hiểu biết về RESTful APIs và WebSocket.",
-            "Có tư duy tốt về UI/UX và Performance Optimization.",
-            "Có khả năng đọc hiểu tài liệu tiếng Anh tốt."
-        ],
-        benefits: [
-            "Mức lương hấp dẫn (20 - 35 triệu) + Thưởng dự án.",
-            "Lương tháng 13, thưởng lễ tết theo quy định.",
-            "Đóng bảo hiểm đầy đủ theo luật lao động.",
-            "Review tăng lương định kỳ 2 lần/năm.",
-            "Môi trường làm việc trẻ trung, năng động, cởi mở.",
-            "Cơ hội được đào tạo và phát triển chuyên môn.",
-            "Du lịch hàng năm, Team building hàng quý."
-        ]
+    useEffect(() => {
+        const fetchJob = async () => {
+            try {
+                const data = await getJob(id);
+                setJob(data);
+            } catch (err) {
+                setError(err.message || 'Không thể tải chi tiết công việc.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchJob();
+    }, [id]);
+
+    const handleApply = async (e) => {
+        e.preventDefault();
+        setApplying(true);
+        try {
+            await applyJob(id);
+            setShowApplyForm(false);
+            setShowSuccessModal(true);
+        } catch (err) {
+            alert(err.message || 'Ứng tuyển thất bại. Bạn có thể đã ứng tuyển tin này rồi.');
+        } finally {
+            setApplying(false);
+        }
     };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+    if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+    if (!job) return <div className="min-h-screen flex items-center justify-center">Không tìm thấy công việc.</div>;
+
 
     return (
         <div className="bg-gray-50 min-h-screen py-8">
@@ -171,33 +170,15 @@ const JobDetailPage = () => {
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Ứng tuyển ngay</h2>
                         <h3 className="text-ptit-red font-medium mb-6">{job.title}</h3>
 
-                        <form className="space-y-4" onSubmit={(e) => { 
-                            e.preventDefault(); 
-                            setShowApplyForm(false); 
-                            setShowSuccessModal(true);
-                        }}>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
-                                <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-ptit-red outline-none" placeholder="Nguyễn Văn A" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input type="email" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-ptit-red outline-none" placeholder="email@example.com" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-                                <input type="tel" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-ptit-red outline-none" placeholder="09xxxxxxx" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">CV đính kèm (PDF)</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-ptit-red transition-colors cursor-pointer bg-gray-50">
-                                    <Upload className="mx-auto text-gray-400 mb-2" />
-                                    <span className="text-sm text-gray-500">Kéo thả hoặc nhấn để tải lên</span>
-                                </div>
-                            </div>
+                        <form className="space-y-4" onSubmit={handleApply}>
+                            <p className="text-sm text-gray-500 mb-4">Hệ thống sẽ sử dụng CV hiện tại trong hồ sơ của bạn để ứng tuyển. Hãy đảm bảo hồ sơ của bạn đã được cập nhật.</p>
                             
-                            <button type="submit" className="w-full bg-ptit-red text-white font-bold py-3 rounded-lg hover:bg-ptit-darkred transition-all mt-4">
-                                Nộp hồ sơ ứng tuyển
+                            <button 
+                                type="submit" 
+                                disabled={applying}
+                                className="w-full bg-ptit-red text-white font-bold py-3 rounded-lg hover:bg-ptit-darkred transition-all mt-4 disabled:opacity-70"
+                            >
+                                {applying ? 'Đang gửi hồ sơ...' : 'Xác nhận ứng tuyển'}
                             </button>
                         </form>
                     </div>

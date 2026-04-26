@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, MapPin, Briefcase, DollarSign, Clock, 
   ChevronRight, ChevronLeft, CheckCircle, Info, Plus, X,
   Edit3, Save
 } from 'lucide-react';
+import { getJob, updateJob } from '../services/api';
 
 const EditJobPage = () => {
   const { jobId } = useParams();
@@ -12,34 +13,67 @@ const EditJobPage = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock initial data - In a real app, you'd fetch this using jobId
   const [formData, setFormData] = useState({
-    title: 'Senior Frontend Developer (ReactJS)',
-    company: 'Công ty CP ABC',
-    location: 'Hà Nội',
-    salary: '25 - 35 triệu',
+    title: '',
+    company: '',
+    location: '',
+    salary: '',
     type: 'Full-time',
     level: 'Senior',
-    experience: '3-5 năm',
-    deadline: '2026-03-01',
-    description: 'Chúng tôi đang tìm kiếm một Senior Frontend Developer tài năng để gia nhập đội ngũ phát triển sản phẩm cốt lõi...',
-    requirements: 'Thành thạo ReactJS, Cư duy thuật toán tốt, Có kinh nghiệm với TailwindCSS...',
-    benefits: 'Lương thưởng tháng 13, Bảo hiểm cao cấp, Môi trường làm việc trẻ trung...'
+    experience: '',
+    deadline: '',
+    description: '',
+    requirements: '',
+    benefits: ''
   });
+
+  useEffect(() => {
+    const fetchJobData = async () => {
+      try {
+        const job = await getJob(jobId);
+        if (job) {
+          setFormData({
+            title: job.title || '',
+            company: job.companyName || '',
+            location: job.location || '',
+            salary: job.salary || '',
+            type: job.type || 'Full-time',
+            level: job.level || 'Senior',
+            experience: job.experience || '',
+            deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+            description: job.description || '',
+            requirements: job.requirements || '',
+            benefits: job.benefits || ''
+          });
+        }
+      } catch (err) {
+        setError(err.message || 'Không thể tải thông tin công việc.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobData();
+  }, [jobId]);
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Mock API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await updateJob(jobId, formData);
       setIsSuccess(true);
-    }, 1500);
+    } catch (err) {
+      setError(err.message || 'Cập nhật tin thất bại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   if (isSuccess) {
     return (

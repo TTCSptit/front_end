@@ -1,42 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, ChevronRight } from 'lucide-react';
+import { getNews } from '../services/api';
 
 const NewsPage = () => {
-    // Mock News Data
-    const news = [
-        {
-            id: 1,
-            title: "Ngày hội việc làm PTIT 2026: Kết nối doanh nghiệp - Vững bước tương lai",
-            summary: "Sự kiện được mong chờ nhất trong năm dành cho sinh viên PTIT với sự tham gia của hơn 50 doanh nghiệp hàng đầu trong lĩnh vực công nghệ, viễn thông và kinh tế.",
-            date: "05/02/2026",
-            image: "https://portal.ptit.edu.vn/wp-content/uploads/2020/06/IMG_9771.jpg",
-            category: "Sự kiện"
-        },
-        {
-            id: 2,
-            title: "Top 5 kỹ năng IT nhà tuyển dụng tìm kiếm năm 2026",
-            summary: "Báo cáo mới nhất từ VietnamWorks cho thấy nhu cầu tuyển dụng các vị trí liên quan đến AI, Cloud Computing và Cybersecurity đang tăng trưởng mạnh mẽ.",
-            date: "01/02/2026",
-            image: "https://codeby.net/wp-content/uploads/2023/11/ky-nang-IT-can-thiet-cho-developer.png",
-            category: "Thị trường"
-        },
-        {
-            id: 3,
-            title: "Hướng dẫn viết CV và Phỏng vấn chinh phục nhà tuyển dụng khó tính",
-            summary: "Chia sẻ từ chuyên gia nhân sự FPT Software về những lỗi thường gặp khi viết CV và bí quyết trả lời phỏng vấn ấn tượng.",
-            date: "28/01/2026",
-            image: "https://cdn.topcv.vn/800/wp-content/uploads/2020/12/cach-viet-cv-an-tuong.jpg",
-            category: "Cẩm nang"
-        },
-        {
-            id: 4,
-            title: "Học bổng Samsung Talent Program 2026 chính thức mở đơn",
-            summary: "Cơ hội nhận học bổng trị giá lên đến 100 triệu đồng và cơ hội làm việc chính thức tại Samsung R&D Institute Vietnam sau khi tốt nghiệp.",
-            date: "25/01/2026",
-            image: "https://news.samsung.com/vn/wp-content/uploads/2017/09/STP.jpg",
-            category: "Học bổng"
-        }
-    ];
+    const [news, setNews] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchNews = async () => {
+            try {
+                const data = await getNews();
+                setNews(data || []);
+            } catch (err) {
+                console.error("Error fetching news:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchNews();
+    }, []);
+
 
     return (
         <div className="bg-gray-50 min-h-screen py-10">
@@ -53,14 +36,14 @@ const NewsPage = () => {
                             <div key={item.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col md:flex-row h-full md:h-64 border border-gray-100 group cursor-pointer">
                                 <div className="md:w-2/5 h-48 md:h-full overflow-hidden">
                                     <img 
-                                        src={item.image} 
+                                        src={item.imageUrl || "https://ptit.edu.vn/wp-content/uploads/2021/07/bg-header.png"} 
                                         alt={item.title} 
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     />
                                 </div>
                                 <div className="p-6 md:w-3/5 flex flex-col justify-between">
                                     <div>
-                                        <span className="text-ptit-red font-bold text-xs uppercase tracking-wider mb-2 block">{item.category}</span>
+                                        <span className="text-ptit-red font-bold text-xs uppercase tracking-wider mb-2 block">{item.author}</span>
                                         <h2 className="text-xl font-bold text-gray-900 group-hover:text-ptit-red transition-colors mb-3 line-clamp-2">
                                             {item.title}
                                         </h2>
@@ -71,7 +54,7 @@ const NewsPage = () => {
                                     <div className="flex items-center justify-between mt-auto">
                                         <div className="flex items-center gap-2 text-gray-400 text-sm">
                                             <Calendar size={16} />
-                                            {item.date}
+                                            {new Date(item.createdAt).toLocaleDateString()}
                                         </div>
                                         <button className="text-ptit-red font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                                             Xem chi tiết <ChevronRight size={16} />

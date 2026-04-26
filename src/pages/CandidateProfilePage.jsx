@@ -2,57 +2,76 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, MapPin, Briefcase, 
   GraduationCap, Plus, Trash2, Save, Camera, 
-  ArrowLeft, Github, Linkedin, Globe
+  ArrowLeft, Github, Linkedin, Globe, FileText, Upload
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMyProfile, updateProfile, uploadCv, getMyCvUrl } from '../services/api';
 
 const CandidateProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [cvFile, setCvFile] = useState(null);
+  const [uploadingCv, setUploadingCv] = useState(false);
+
   const [profile, setProfile] = useState({
-    fullName: 'Nguyễn Văn A',
-    headline: 'Senior Full Stack Developer',
-    email: 'nguyenvana@example.com',
-    phone: '0987 654 321',
-    address: 'Quận Cầu Giấy, Hà Nội',
-    summary: 'Tôi là một lập trình viên Full Stack với hơn 5 năm kinh nghiệm trong việc xây dựng và phát triển các ứng dụng web quy mô lớn. Đam mê học hỏi công nghệ mới và tối ưu hóa trải nghiệm người dùng.',
-    skills: ['React', 'Node.js', 'TypeScript', 'Tailwind CSS', 'PostgreSQL', 'Docker'],
-    experience: [
-      {
-        id: 1,
-        company: 'Công ty Công nghệ ABC',
-        position: 'Senior Developer',
-        period: '2021 - Hiện tại',
-        description: 'Phát triển các tính năng cốt lõi cho nền tảng thương mại điện tử.'
-      },
-      {
-        id: 2,
-        company: 'Startup XYZ',
-        position: 'Full Stack Developer',
-        period: '2018 - 2021',
-        description: 'Xây dựng ứng dụng quản lý tài chính từ con số 0.'
-      }
-    ],
-    education: [
-      {
-        id: 1,
-        school: 'Học viện Công nghệ Bưu chính Viễn thông',
-        degree: 'Kỹ sư Công nghệ thông tin',
-        period: '2014 - 2018'
-      }
-    ]
+    fullName: '',
+    headline: '',
+    email: '',
+    phone: '',
+    address: '',
+    summary: '',
+    skills: [],
+    experience: [],
+    education: [],
+    cvUrl: '',
+    hasCv: false
   });
 
-  // Load from localStorage if exists
-  useEffect(() => {
-    const savedProfile = localStorage.getItem('candidateProfile');
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
+  const fetchProfile = async () => {
+    try {
+      const data = await getMyProfile();
+      setProfile({
+        ...data,
+        skills: data.skills || [],
+        experience: data.experience || [],
+        education: data.education || []
+      });
+    } catch (err) {
+      setError(err.message || 'Không thể tải thông tin hồ sơ.');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
-  const handleSave = () => {
-    localStorage.setItem('candidateProfile', JSON.stringify(profile));
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      await updateProfile(profile);
+      setIsEditing(false);
+      alert('Đã lưu hồ sơ thành công!');
+    } catch (err) {
+      alert(err.message || 'Lưu hồ sơ thất bại.');
+    }
+  };
+
+  const handleCvUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setUploadingCv(true);
+    try {
+      await uploadCv(file);
+      alert('Tải CV lên thành công!');
+      fetchProfile();
+    } catch (err) {
+      alert(err.message || 'Tải CV lên thất bại.');
+    } finally {
+      setUploadingCv(false);
+    }
   };
 
   const addSkill = () => {
@@ -113,10 +132,12 @@ const CandidateProfilePage = () => {
     setProfile({ ...profile, education: profile.education.filter(edu => edu.id !== id) });
   };
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải hồ sơ...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
       <div className="container mx-auto px-4 max-w-5xl">
-        {/* Header Navigation */}
         <div className="mb-8 flex items-center justify-between">
           <Link to="/home" className="flex items-center gap-2 text-gray-600 hover:text-ptit-red transition">
             <ArrowLeft size={20} />
@@ -136,7 +157,6 @@ const CandidateProfilePage = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Personal Info */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 overflow-hidden text-center">
               <div className="relative inline-block mb-4">
@@ -219,7 +239,7 @@ const CandidateProfilePage = () => {
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center justify-between">
                 <span>Kỹ năng</span>
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -242,6 +262,42 @@ const CandidateProfilePage = () => {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* CV Management */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText size={20} className="text-ptit-red" />
+                Hồ sơ CV
+              </h3>
+              {profile.hasCv ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 rounded-xl border border-red-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="text-ptit-red" />
+                      <span className="text-sm font-bold text-gray-700">CV_Cua_Toi.pdf</span>
+                    </div>
+                    <a 
+                      href={getMyCvUrl()} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-ptit-red hover:underline"
+                    >
+                      Xem CV
+                    </a>
+                  </div>
+                  <label className="block w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-center text-xs text-gray-400 hover:border-ptit-red hover:text-ptit-red cursor-pointer transition">
+                    <input type="file" className="hidden" accept=".pdf" onChange={handleCvUpload} disabled={uploadingCv} />
+                    {uploadingCv ? 'Đang tải lên...' : 'Thay đổi CV khác'}
+                  </label>
+                </div>
+              ) : (
+                <label className="block w-full py-8 border-2 border-dashed border-gray-200 rounded-2xl text-center text-gray-400 hover:border-ptit-red hover:text-ptit-red cursor-pointer transition">
+                  <input type="file" className="hidden" accept=".pdf" onChange={handleCvUpload} disabled={uploadingCv} />
+                  <Upload className="mx-auto mb-2" />
+                  <span className="text-sm font-medium">{uploadingCv ? 'Đang tải lên...' : 'Tải lên CV (PDF)'}</span>
+                </label>
+              )}
             </div>
           </div>
 

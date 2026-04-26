@@ -1,49 +1,43 @@
-import React, { useState } from 'react';
-import { Search, Code, Megaphone, BarChart3, Stethoscope, Palette, Briefcase, GraduationCap, Cpu, Globe, Building2, Truck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Code, Megaphone, BarChart3, Stethoscope, Palette, Briefcase, GraduationCap, Cpu, Globe, Building2, Truck, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getCategories } from '../services/api';
 
 const IndustriesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [industries, setIndustries] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const industries = [
-    { id: 1, name: 'Công nghệ thông tin', count: 1243, icon: <Code size={32} />, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 2, name: 'Marketing / Truyền thông', count: 856, icon: <Megaphone size={32} />, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { id: 3, name: 'Kinh doanh / Bán hàng', count: 2105, icon: <BarChart3 size={32} />, color: 'text-green-600', bg: 'bg-green-50' },
-    { id: 4, name: 'Y tế / Chăm sóc sức khỏe', count: 432, icon: <Stethoscope size={32} />, color: 'text-red-600', bg: 'bg-red-50' },
-    { id: 5, name: 'Thiết kế / Sáng tạo', count: 567, icon: <Palette size={32} />, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 6, name: 'Hành chính / Nhân sự', count: 789, icon: <Briefcase size={32} />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { id: 7, name: 'Giáo dục / Đào tạo', count: 345, icon: <GraduationCap size={32} />, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { id: 8, name: 'Điện tử viễn thông', count: 678, icon: <Cpu size={32} />, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-    { id: 9, name: 'Logistics / Vận tải', count: 234, icon: <Truck size={32} />, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { id: 10, name: 'Xây dựng / Kiến trúc', count: 456, icon: <Building2 size={32} />, color: 'text-gray-600', bg: 'bg-gray-50' },
-    { id: 11, name: 'Du lịch / Khách sạn', count: 321, icon: <Globe size={32} />, color: 'text-pink-600', bg: 'bg-pink-50' },
-    { id: 12, name: 'Tài chính / Ngân hàng', count: 987, icon: <DollarSignIcon size={32} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setIndustries(data || []);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
-  // Helper for manual icon rendering if needed, but array above works fine
-  function DollarSignIcon(props) {
-      return (
-        <svg
-          {...props}
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="12" x2="12" y1="2" y2="22" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      )
-  }
+  const getIcon = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('it') || n.includes('lập trình') || n.includes('công nghệ')) return <Code size={32} />;
+    if (n.includes('marketing')) return <Megaphone size={32} />;
+    if (n.includes('kinh doanh')) return <BarChart3 size={32} />;
+    if (n.includes('y tế')) return <Stethoscope size={32} />;
+    if (n.includes('thiết kế')) return <Palette size={32} />;
+    if (n.includes('giáo dục')) return <GraduationCap size={32} />;
+    if (n.includes('tài chính')) return <DollarSign size={32} />;
+    return <Briefcase size={32} />;
+  };
 
   const filteredIndustries = industries.filter(ind => 
     ind.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -75,14 +69,14 @@ const IndustriesPage = () => {
               key={item.id}
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 border border-gray-100 group cursor-pointer"
             >
-              <div className={`w-14 h-14 rounded-xl ${item.bg} ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                {item.icon}
+              <div className={`w-14 h-14 rounded-xl bg-red-50 text-ptit-red flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                {getIcon(item.name)}
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-ptit-red transition-colors">
                 {item.name}
               </h3>
               <p className="text-gray-500 text-sm font-medium">
-                {item.count.toLocaleString()} việc làm
+                {item.jobCount?.toLocaleString() || 0} việc làm
               </p>
             </Link>
           ))}

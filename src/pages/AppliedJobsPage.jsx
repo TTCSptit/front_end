@@ -1,60 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, Briefcase, MapPin, DollarSign, Clock, 
   ChevronRight, Calendar, CheckCircle2, AlertCircle, 
   ArrowRight, Filter, SlidersHorizontal, LayoutGrid, List, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getMyApplications } from '../services/api';
 
 const AppliedJobsPage = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Mock Data for applied jobs
-  const appliedJobs = [
-    {
-      id: 1,
-      title: "Senior Frontend Developer (React/Vue)",
-      company: "Tập đoàn ABC Technology",
-      logo: "https://ui-avatars.com/api/?name=ABC+Tech&background=0D8ABC&color=fff&size=128",
-      salary: "20 - 35 Triệu",
-      location: "Hà Nội",
-      appliedDate: "07/02/2026",
-      status: "Đang xem xét",
-      statusColor: "blue"
-    },
-    {
-      id: 2,
-      title: "UI/UX Designer",
-      company: "FPT Software",
-      logo: "https://ui-avatars.com/api/?name=FPT&background=f00&color=fff&size=128",
-      salary: "15 - 25 Triệu",
-      location: "Đà Nẵng",
-      appliedDate: "05/02/2026",
-      status: "Đã duyệt CV",
-      statusColor: "green"
-    },
-    {
-      id: 3,
-      title: "Mobile App Developer (Flutter)",
-      company: "Viettel Group",
-      logo: "https://ui-avatars.com/api/?name=Viettel&background=ed1c24&color=fff&size=128",
-      salary: "18 - 30 Triệu",
-      location: "Hồ Chí Minh",
-      appliedDate: "02/02/2026",
-      status: "Đang phỏng vấn",
-      statusColor: "amber"
-    }
-  ];
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const data = await getMyApplications();
+        setAppliedJobs(data || []);
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách ứng tuyển.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchApplications();
+  }, []);
 
-  const getStatusStyle = (color) => {
-    switch (color) {
-      case 'blue': return 'bg-blue-50 text-blue-600 border-blue-100';
-      case 'green': return 'bg-green-50 text-green-600 border-green-100';
-      case 'amber': return 'bg-amber-50 text-amber-600 border-amber-100';
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'Accepted': return 'bg-green-50 text-green-600 border-green-100';
+      case 'Rejected': return 'bg-red-50 text-red-600 border-red-100';
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'Pending': return 'Đang xem xét';
+      case 'Accepted': return 'Đã chấp nhận';
+      case 'Rejected': return 'Từ chối';
+      default: return status;
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -112,9 +103,13 @@ const AppliedJobsPage = () => {
             </div>
         </div>
 
+        {/* Loading / Error */}
+        {loading && <div className="py-20 text-center text-gray-500">Đang tải danh sách ứng tuyển...</div>}
+        {error && <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 mb-8">{error}</div>}
+
         {/* Applied Jobs List */}
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-          {appliedJobs.map((item) => (
+          {!loading && appliedJobs.map((item) => (
             <div 
               key={item.id} 
               className={`bg-white rounded-2xl border border-gray-100 hover:border-ptit-red/30 transition-all group overflow-hidden ${viewMode === 'list' ? 'flex flex-col md:flex-row md:items-center p-6 gap-6 shadow-sm hover:shadow-xl' : 'p-6 shadow-sm hover:shadow-xl'}`}
@@ -155,8 +150,8 @@ const AppliedJobsPage = () => {
 
               {/* Status and Actions */}
               <div className={`flex items-center justify-between md:justify-end gap-6 ${viewMode === 'grid' ? 'mt-6 pt-6 border-t border-gray-50' : 'flex-shrink-0'}`}>
-                <div className={`px-4 py-2 rounded-full border text-xs font-black uppercase tracking-widest whitespace-nowrap ${getStatusStyle(item.statusColor)}`}>
-                    {item.status}
+                <div className={`px-4 py-2 rounded-full border text-xs font-black uppercase tracking-widest whitespace-nowrap ${getStatusStyle(item.status)}`}>
+                    {getStatusText(item.status)}
                 </div>
                 
                 <div className="flex gap-2">

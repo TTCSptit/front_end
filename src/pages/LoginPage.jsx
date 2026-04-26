@@ -1,26 +1,40 @@
 import React, { useState } from 'react';
 import { User, Lock, ArrowRight, Briefcase, GraduationCap, Sparkles, Building2, Users, TrendingUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../services/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('candidate'); // 'candidate' or 'recruiter'
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password, role });
-    
-    // Save login state to sessionStorage
-    sessionStorage.setItem('isLoggedIn', 'true');
-    sessionStorage.setItem('userRole', role);
-    
-    // Redirect based on role
-    if (role === 'recruiter') {
-      navigate('/recruiter/dashboard');
-    } else {
-      navigate('/home');
+    setError('');
+    setLoading(true);
+    try {
+      // Backend nhận Role với chữ cái đầu viết hoa: 'Candidate' | 'Recruiter'
+      const apiRole = role === 'recruiter' ? 'Recruiter' : 'Candidate';
+      const result = await login(email, password, apiRole);
+
+      // Lưu token + thông tin user
+      sessionStorage.setItem('token', result.token);
+      sessionStorage.setItem('isLoggedIn', 'true');
+      sessionStorage.setItem('userRole', role);
+      sessionStorage.setItem('userEmail', result.user?.email ?? email);
+
+      if (role === 'recruiter') {
+        navigate('/recruiter/dashboard');
+      } else {
+        navigate('/home');
+      }
+    } catch (err) {
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,12 +187,19 @@ const LoginPage = () => {
               <Link to="/forgot-password" size={20} className="text-red-600 hover:text-red-700 font-semibold">Quên mật khẩu?</Link>
             </div>
 
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Đăng nhập
-              <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
+              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {!loading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
 

@@ -1,35 +1,73 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, Building2, MapPin, Globe, Phone, Mail, 
   Camera, Save, Users, Calendar, Briefcase, Edit3
 } from 'lucide-react';
+import { getMyCompany, updateCompany } from '../services/api';
 
 const CompanyProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [companyData, setCompanyData] = useState({
-    name: 'Công ty CP Công nghệ ABC',
+    id: null,
+    name: '',
     industry: 'Công nghệ thông tin',
     size: '100-500 nhân viên',
     founded: '2015',
-    website: 'https://abc-tech.vn',
-    email: 'hr@abc-tech.vn',
-    phone: '024 1234 5678',
-    address: 'Tầng 15, Tòa nhà Landmark, Quận Cầu Giấy, Hà Nội',
-    description: 'ABC Tech là công ty công nghệ hàng đầu Việt Nam, chuyên cung cấp các giải pháp phần mềm cho doanh nghiệp. Với đội ngũ hơn 200 kỹ sư tài năng, chúng tôi cam kết mang đến những sản phẩm chất lượng cao nhất cho khách hàng.',
-    benefits: [
-      'Lương thưởng cạnh tranh',
-      'Bảo hiểm sức khỏe cao cấp',
-      'Đào tạo & phát triển',
-      'Môi trường làm việc trẻ trung'
-    ]
+    website: '',
+    email: '',
+    phone: '',
+    address: '',
+    description: '',
+    logoUrl: '',
+    benefits: []
   });
 
-  const stats = [
-    { icon: Briefcase, value: '12', label: 'Tin đang tuyển' },
-    { icon: Users, value: '156', label: 'Ứng viên' },
-    { icon: Calendar, value: '2 năm', label: 'Trên PTIT Jobs' }
-  ];
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const data = await getMyCompany();
+        setCompanyData({
+          id: data.id,
+          name: data.name || '',
+          industry: data.industry || 'Công nghệ thông tin',
+          size: data.size || '100-500 nhân viên',
+          founded: data.founded || '2015',
+          website: data.websiteUrl || '',
+          email: data.email || '',
+          phone: data.phoneNumber || '',
+          address: data.location || '',
+          description: data.description || '',
+          logoUrl: data.logoUrl || '',
+          benefits: data.benefits || []
+        });
+      } catch (err) {
+        setError(err.message || 'Không thể tải thông tin công ty.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCompany();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await updateCompany(companyData.id, {
+        name: companyData.name,
+        location: companyData.address,
+        websiteUrl: companyData.website,
+        email: companyData.email,
+        phoneNumber: companyData.phone,
+        logoUrl: companyData.logoUrl,
+        description: companyData.description
+      });
+      setIsEditing(false);
+      alert('Cập nhật hồ sơ công ty thành công!');
+    } catch (err) {
+      alert(err.message || 'Cập nhật thất bại.');
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
@@ -46,7 +84,7 @@ const CompanyProfilePage = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">Hồ sơ Công ty</h1>
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition ${
                 isEditing 
                   ? 'bg-green-600 text-white hover:bg-green-700' 
@@ -67,8 +105,12 @@ const CompanyProfilePage = () => {
               <div className="flex items-start gap-6">
                 {/* Logo */}
                 <div className="relative">
-                  <div className="w-28 h-28 bg-gradient-to-br from-red-600 to-red-400 rounded-2xl flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-                    {companyData.name.charAt(0)}
+                  <div className="w-28 h-28 bg-gradient-to-br from-red-600 to-red-400 rounded-2xl flex items-center justify-center text-white text-4xl font-bold shadow-lg overflow-hidden">
+                    {companyData.logoUrl ? (
+                      <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      companyData.name.charAt(0)
+                    )}
                   </div>
                   {isEditing && (
                     <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 shadow-sm">

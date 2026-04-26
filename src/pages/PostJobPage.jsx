@@ -5,10 +5,13 @@ import {
   Zap, AlertCircle, Sparkles, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { postJob } from '../services/api';
 
 const PostJobPage = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [loading, setLoading] = useState(false);
   
 
   const [formData, setFormData] = useState({
@@ -45,13 +48,30 @@ const PostJobPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    setSubmitError('');
+    setLoading(true);
+    try {
+      await postJob({
+        title: formData.title,
+        location: formData.location,
+        salary: formData.salary,
+        type: formData.type,
+        experience: formData.experience,
+        description: formData.description,
+        requirements: formData.requirements,
+        benefits: formData.benefits,
+        expiryDate: formData.expiryDate || null,
+        isFeatured: formData.isFeatured,
+      });
       setIsSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1000);
+    } catch (err) {
+      setSubmitError(err.message || 'Đăng tin thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -289,6 +309,11 @@ const PostJobPage = () => {
           </div>
 
           {/* Submit */}
+          {submitError && (
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3">
+              {submitError}
+            </div>
+          )}
           <div className="flex items-center justify-end gap-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky bottom-6 z-10">
             <button 
               type="button"
@@ -299,9 +324,10 @@ const PostJobPage = () => {
             </button>
             <button 
               type="submit"
-              className="px-12 py-4 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-100 active:scale-95"
+              disabled={loading}
+              className="px-12 py-4 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-100 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Đăng tin ngay
+              {loading ? 'Đang đăng tin...' : 'Đăng tin ngay'}
             </button>
           </div>
         </form>

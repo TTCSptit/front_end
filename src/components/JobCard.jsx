@@ -2,14 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, DollarSign, Clock, Building2, MessageSquare } from 'lucide-react';
 
-const JobCard = ({ job, onChatOpen, linkType = 'company' }) => {
-  const linkTo = linkType === 'job' ? `/job/${job.id}` : `/company/${job.id}`;
+const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
+  const linkTo = linkType === 'job' ? `/job/${job.id}` : `/company/${job.companyId}`;
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100 flex flex-col h-full group">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center p-2 shrink-0 border border-gray-100 group-hover:border-red-100 transition-colors">
-          <img src={job.logo} alt={job.company} className="max-w-full max-h-full object-contain" />
+          <img src={job.logoUrl || job.logo || 'https://via.placeholder.com/150'} alt={job.companyName || job.company} className="max-w-full max-h-full object-contain" />
         </div>
         <div>
           <h3 className="font-bold text-gray-900 group-hover:text-ptit-red transition-colors line-clamp-2 mb-1">
@@ -17,7 +17,7 @@ const JobCard = ({ job, onChatOpen, linkType = 'company' }) => {
           </h3>
           <p className="text-gray-500 text-sm font-medium flex items-center gap-1">
             <Building2 size={14} />
-            {job.company}
+            {job.companyName || job.company}
           </p>
         </div>
       </div>
@@ -26,7 +26,7 @@ const JobCard = ({ job, onChatOpen, linkType = 'company' }) => {
         <div className="flex flex-wrap gap-2 text-sm text-gray-600">
           <span className="bg-gray-50 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
             <DollarSign size={12} className="text-green-600" />
-            {job.salary}
+            {job.salary || 'Thỏa thuận'}
           </span>
           <span className="bg-gray-50 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
             <MapPin size={12} className="text-blue-500" />
@@ -34,7 +34,7 @@ const JobCard = ({ job, onChatOpen, linkType = 'company' }) => {
           </span>
           <span className="bg-gray-50 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
             <Clock size={12} className="text-orange-500" />
-            {job.deadline}
+            {job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Liên hệ'}
           </span>
         </div>
         

@@ -1,67 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Search, Filter, ChevronLeft, Briefcase } from 'lucide-react';
 import JobCard from '../components/JobCard';
+import { getJobs, getCategories } from '../services/api';
 
 const IndustryDetailPage = () => {
   const { id } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [jobs, setJobs] = useState([]);
+  const [industryName, setIndustryName] = useState('Ngành nghề');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock Data Lookup (In a real app, fetch from API based on ID)
-  const industryName = {
-    '1': 'Công nghệ thông tin',
-    '2': 'Marketing / Truyền thông',
-    '3': 'Kinh doanh / Bán hàng',
-  }[id] || 'Ngành nghề';
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const cats = await getCategories();
+        const currentCat = cats.find(c => c.id.toString() === id);
+        if (currentCat) {
+          setIndustryName(currentCat.name);
+          const jobData = await getJobs({ categorySlug: currentCat.slug });
+          setJobs(jobData.items || []);
+        }
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách việc làm.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
-  // Mock Jobs Data
-  const jobs = [
-    {
-       id: 1,
-       title: "Senior Frontend Developer (React/Vue)",
-       company: "FPT Software",
-       location: "Hà Nội",
-       salary: "20 - 35 Triệu",
-       deadline: "30/04/2026",
-       logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/FPT_Software_Logo.png"
-    },
-    {
-       id: 2,
-       title: "Backend Developer (NodeJS/Go)",
-       company: "Viettel Telecom",
-       location: "Hà Nội",
-       salary: "25 - 40 Triệu",
-       deadline: "15/05/2026",
-       logo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Viettel_logo_2021.png"
-    },
-    {
-       id: 3,
-       title: "Product Owner / PM",
-       company: "One Mount Group",
-       location: "Hà Nội",
-       salary: "30 - 50 Triệu",
-       deadline: "20/04/2026",
-       logo: "https://inkythuatso.com/uploads/images/2021/11/logo-one-mount-group-inkythuatso-01-13-16-24-33.jpg"
-    },
-    {
-       id: 4,
-       title: "DevOps Engineer",
-       company: "VNG Corporation",
-       location: "TP. HCM",
-       salary: "Up to $3000",
-       deadline: "10/06/2026",
-       logo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/52/VNG_Corporation_logo.svg/1200px-VNG_Corporation_logo.svg.png"
-    },
-    {
-        id: 5,
-        title: "Mobile Developer (Flutter)",
-        company: "MISA JSC",
-        location: "Hà Nội",
-        salary: "15 - 25 Triệu",
-        deadline: "25/03/2026",
-        logo: "https://misa.vn/wp-content/uploads/2020/10/logo-misa.png"
-    }
-  ];
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -137,8 +106,11 @@ const IndustryDetailPage = () => {
 
             {/* Job List */}
             <div className="lg:col-span-3">
+                {loading && <div className="text-center py-10">Đang tải danh sách việc làm...</div>}
+                {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">{error}</div>}
+                
                 <div className="grid grid-cols-1 gap-4">
-                    {jobs.map((job) => (
+                    {!loading && jobs.map((job) => (
                         // Passing linkType='job' so that clicking Apply goes to JobDetail, 
                         // NOT CompanyDetail (since we are already drilling down to jobs)
                         <div key={job.id} className="h-full">

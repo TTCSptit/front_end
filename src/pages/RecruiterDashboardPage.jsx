@@ -6,6 +6,7 @@ import {
   CheckCircle, AlertCircle, XCircle, BarChart3,
   Building2, Star, Trash2, Edit3, Zap, Briefcase
 } from 'lucide-react';
+import { getEmployerJobsWithStats, deleteJob } from '../services/api';
 
 // Mock data for posted jobs
 const initialJobs = [
@@ -70,11 +71,41 @@ const statusConfig = {
 };
 
 const RecruiterDashboardPage = () => {
-  const [jobs, setJobs] = React.useState(initialJobs);
+  const [jobs, setJobs] = React.useState([]);
+  const [overview, setOverview] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState('');
+  const [keyword, setKeyword] = React.useState('');
 
-  const handleDelete = (id) => {
+  const fetchData = async (kw = '') => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getEmployerJobsWithStats(kw);
+      setOverview(data);
+      setJobs(data?.jobs ?? []);
+    } catch (err) {
+      setError(err.message || 'Không thể tải dữ liệu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => { fetchData(); }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchData(keyword);
+  };
+
+  const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xóa tin tuyển dụng này?')) {
-      setJobs(jobs.filter(j => j.id !== id));
+      try {
+        await deleteJob(id);
+        setJobs(prev => prev.filter(j => j.id !== id));
+      } catch (err) {
+        alert(err.message || 'Xóa thất bại.');
+      }
     }
   };
 
@@ -139,41 +170,47 @@ const RecruiterDashboardPage = () => {
               </Link>
             </div>
 
-            {/* Stats */}
+            {/* Stats - lấy từ API overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-gray-900">{jobs.length}</div>
+                <div className="text-3xl font-bold text-gray-900">{overview?.totalJobs ?? jobs.length}</div>
                 <div className="text-sm text-gray-500">Tổng tin đăng</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-green-600">{jobs.filter(j => j.status === 'active').length}</div>
+                <div className="text-3xl font-bold text-green-600">{overview?.activeJobs ?? jobs.filter(j => j.status === 'active').length}</div>
                 <div className="text-sm text-gray-500">Đang hiển thị</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-blue-600">{jobs.reduce((sum, j) => sum + j.views, 0)}</div>
+                <div className="text-3xl font-bold text-blue-600">{overview?.totalViews ?? jobs.reduce((sum, j) => sum + (j.views ?? 0), 0)}</div>
                 <div className="text-sm text-gray-500">Lượt xem</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-ptit-red">{jobs.reduce((sum, j) => sum + j.applications, 0)}</div>
+                <div className="text-3xl font-bold text-ptit-red">{overview?.totalApplications ?? jobs.reduce((sum, j) => sum + (j.applications ?? 0), 0)}</div>
                 <div className="text-sm text-gray-500">Đơn ứng tuyển</div>
               </div>
             </div>
 
             {/* Search & Filter */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input 
                   type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
                   placeholder="Tìm kiếm tin đăng..."
                   className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red focus:ring-1 focus:ring-ptit-red outline-none shadow-sm"
                 />
               </div>
-              <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-sm font-medium">
-                <Filter size={18} />
-                Lọc
+              <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-ptit-red text-white border border-transparent rounded-xl hover:bg-red-700 transition shadow-sm font-medium">
+                <Search size={18} />
+                Tìm kiếm
               </button>
-            </div>
+            </form>
+
+            {/* Loading / Error */}
+            {loading && <div className="text-center py-16 text-gray-500">Đang tải dữ liệu...</div>}
+            {error && <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 mb-4">{error}</div>}
 
             {/* Jobs List */}
             <div className="space-y-4">

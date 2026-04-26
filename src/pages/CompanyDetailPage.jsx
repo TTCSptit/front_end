@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Globe, Mail, Users, Calendar, Clock, DollarSign, Briefcase, 
   ChevronRight, CheckCircle, Star, Award, Shield, Zap, Sparkles, 
@@ -6,10 +6,34 @@ import {
   MessageSquare, UserCheck, FileText, Send, Crown
 } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
+import { getCompany, getJobs } from '../services/api';
 
 const CompanyDetailPage = () => {
   const { id } = useParams();
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('about');
+
+  const [jobs, setJobs] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [companyData, jobData] = await Promise.all([
+          getCompany(id),
+          getJobs({ companyId: id })
+        ]);
+        setCompany(companyData);
+        setJobs(jobData.items || []);
+      } catch (err) {
+        setError(err.message || 'Không thể tải thông tin công ty.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   // Standard theme for all companies
   const activePlanId = 'basic';
@@ -52,80 +76,17 @@ const CompanyDetailPage = () => {
 
   const theme = themes[activePlanId] || themes.basic;
 
-  // Mock Data
-  const company = {
-    name: "Tập đoàn ABC Technology",
-    logo: "https://ui-avatars.com/api/?name=ABC+Tech&background=0D8ABC&color=fff&size=128",
-    banner: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1950&q=80",
-    slogan: "Tiên phong công nghệ - Dẫn lối tương lai",
-    description: "ABC Technology là tập đoàn công nghệ đa quốc gia hàng đầu Việt Nam, chuyên cung cấp các giải pháp phần mềm toàn diện và dịch vụ tư vấn chuyển đổi số. Với hơn 10 năm kinh nghiệm và mạng lưới khách hàng toàn cầu, chúng tôi tự hào mang đến những sản phẩm đột phá công nghệ, giúp đối nghiệp tối ưu hóa quy trình vận hành.\n\nTại ABC Tech, chúng tôi không chỉ xây dựng phần mềm, chúng tôi kiến tạo tương lai. Môi trường tại đây đề cao văn hóa minh bạch, thúc đẩy sự sáng tạo không giới hạn và hỗ trợ mọi cá nhân phát triển tối đa tiềm năng của mình thông qua các dự án tầm cỡ quốc tế.",
-    founded: "2010",
-    size: "500-1000 nhân viên",
-    industry: "Công nghệ thông tin",
-    website: "https://abc-tech.com",
-    email: "hr@abc-tech.com",
-    address: "Tầng 12, Tòa nhà Innovation, Quận Cầu Giấy, Hà Nội",
-    social: {
-      fb: "facebook.com/abctech",
-      linkedin: "linkedin.com/company/abc-tech",
-      insta: "@abctech_life"
-    },
-    benefits: [
-      { icon: DollarSign, title: "Lương thưởng", text: "Mức lương cạnh tranh, thưởng dự án hấp dẫn (tháng 13, 14, 15)" },
-      { icon: Shield, title: "Sức khỏe", text: "Bảo hiểm sức khỏe toàn diện (PVI) cho nhân viên và người thân" },
-      { icon: Zap, title: "Onsite", text: "Cơ hội onsite tại Nhật Bản, Mỹ, Singapore và Châu Âu" },
-      { icon: Award, title: "Phát triển", text: "Lộ trình thăng tiến rõ ràng, hỗ trợ 100% chi phí thi chứng chỉ quốc tế" }
-    ],
-    gallery: [
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&q=80&w=600",
-      "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=600",
-      "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=600",
-      "https://images.unsplash.com/photo-1522071823991-b9671f9d7f1f?auto=format&fit=crop&q=80&w=600"
-    ],
-    products: [
-      { name: "ABC One", desc: "Nền tảng quản lý doanh nghiệp ERP thế hệ mới", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400" },
-      { name: "ABC AI Lab", desc: "Giải pháp trí tuệ nhân tạo chuyên sâu cho y tế", image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=400" }
-    ],
-    testimonials: [
-      { name: "Nguyễn Văn A", role: "Senior Developer", content: "Môi trường ở đây cực kỳ cởi mở. Tôi được tự do thử nghiệm các công nghệ mới nhất mà không sợ sai.", avatar: "https://i.pravatar.cc/150?u=1" },
-      { name: "Lê Thị B", role: "Product Manager", content: "Sếp tâm lý, đồng nghiệp thân thiện. Buffet trưa tại công ty là điều tôi thích nhất mỗi ngày!", avatar: "https://i.pravatar.cc/150?u=2" }
-    ],
-    process: [
-      { step: "Ứng tuyển", desc: "Gửi CV và Portfolio thông qua hệ thống", icon: FileText },
-      { step: "Sàng lọc", desc: "Phỏng vấn sơ vấn với HR qua điện thoại", icon: UserCheck },
-      { step: "Kỹ thuật", desc: "Làm bài test online và phỏng vấn chuyên môn", icon: Smartphone },
-      { step: "Thoả thuận", desc: "Thảo luận về phúc lợi và nhận Offer", icon: Send }
-    ]
-  };
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải thông tin công ty...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+  if (!company) return <div className="min-h-screen flex items-center justify-center">Không tìm thấy công ty.</div>;
 
-  const jobs = [
-    {
-      id: 1,
-      title: "Senior Frontend Developer (React/Vue)",
-      salary: "20 - 35 Triệu",
-      location: "Hà Nội",
-      deadline: "30/04/2026",
-      tags: ["ReactJS", "VueJS", "JavaScript"],
-      isNew: true
-    },
-    {
-      id: 2,
-      title: "Backend Developer (NodeJS/Go)",
-      salary: "25 - 40 Triệu",
-      location: "Hà Nội",
-      deadline: "15/05/2026",
-      tags: ["NodeJS", "GoLang", "MySQL"],
-      isNew: false
-    }
-  ];
 
   return (
     <div className={`min-h-screen pb-20 font-sans ${theme.mesh} transition-colors duration-1000`}>
 
-      {/* Hero Section with Glassmorphism Header Overlay */}
       <div className="relative h-[480px] w-full overflow-hidden">
         <img 
-          src={company.banner} 
+          src={company.banner || "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1950&q=80"} 
           alt="Company Banner" 
           className="w-full h-full object-cover scale-105"
         />
@@ -133,7 +94,6 @@ const CompanyDetailPage = () => {
       </div>
 
       <div className="container mx-auto px-4 -mt-36 relative z-10 transition-all duration-700">
-        {/* Company Identity Card */}
         <div className={`bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-8 border border-white/50 flex flex-col md:flex-row items-center md:items-end gap-8 mb-10 transition-all hover:shadow-[0_48px_80px_-24px_rgba(0,0,0,0.15)] ${activePlanId === 'premium' ? 'animate-shine' : ''}`}>
           <div className="w-44 h-44 md:w-56 md:h-56 rounded-[2rem] bg-white p-5 shadow-2xl flex-shrink-0 -mt-20 sm:-mt-28 border-8 transition-all hover:scale-105 duration-700 relative group border-white">
             <img 
@@ -187,9 +147,7 @@ const CompanyDetailPage = () => {
 
       <div className="container mx-auto px-4 pb-20 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Main Content Area */}
             <div className="lg:col-span-2 space-y-10">
-                {/* Tab Navigation */}
                 <div className="flex gap-10 mb-2 border-b border-gray-100 px-6 overflow-x-auto scrollbar-hide cascade-item">
                     {[
                         {id: 'about', label: 'Thông tin chung'},
@@ -213,7 +171,6 @@ const CompanyDetailPage = () => {
 
                 {activeTab === 'about' && (
                     <>
-                        {/* About Section */}
                         <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.1s'}}>
                             <h2 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-4">
                                 <Sparkles className={`text-${theme.primary} animate-pulse`} size={28} />
@@ -222,203 +179,52 @@ const CompanyDetailPage = () => {
                             <div className="text-gray-600 leading-loose text-justify whitespace-pre-line text-lg mb-12 opacity-90">
                                 {company.description}
                             </div>
-
-                            {/* Highlights Grid */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div className={`p-8 ${theme.bg} rounded-[2rem] border-2 ${theme.border} text-center group hover:scale-105 transition-transform`}>
-                                    <div className={`text-3xl font-black text-${theme.primary} mb-2`}>10+</div>
-                                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Năm kinh nghiệm</div>
-                                </div>
-                                <div className={`p-8 ${activePlanId === 'premium' ? 'bg-amber-50' : 'bg-blue-50'} rounded-[2rem] border-2 ${activePlanId === 'premium' ? 'border-amber-100' : 'border-blue-100'} text-center group hover:scale-105 transition-transform`}>
-                                    <div className={`text-3xl font-black ${activePlanId === 'premium' ? 'text-amber-600' : 'text-blue-600'} mb-2`}>200+</div>
-                                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Dự án thành công</div>
-                                </div>
-                                <div className="p-8 bg-green-50 rounded-[2rem] border-2 border-green-100 text-center group hover:scale-105 transition-transform">
-                                    <div className="text-3xl font-black text-green-600 mb-2">15</div>
-                                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Quốc gia</div>
-                                </div>
-                                <div className="p-8 bg-purple-50 rounded-[2rem] border-2 border-purple-100 text-center group hover:scale-105 transition-transform">
-                                    <div className="text-3xl font-black text-purple-600 mb-2">Top 5</div>
-                                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">IT Outsourcing</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Benefits Section */}
-                        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.2s'}}>
-                            <h2 className="text-3xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                                <Zap className={`text-${theme.primary} animate-bounce`} size={28} />
-                                Phúc lợi dành cho bạn
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {company.benefits.map((benefit, index) => (
-                                    <div key={index} className={`flex items-start gap-6 p-6 rounded-3xl bg-gray-50/50 hover:bg-white hover:shadow-2xl hover:border-${theme.primary} transition-all border-2 border-transparent group`}>
-                                        <div className={`w-14 h-14 bg-white rounded-2xl shadow-lg flex items-center justify-center text-${theme.primary} group-hover:bg-${theme.primary} group-hover:text-white transition-all transform group-hover:rotate-6`}>
-                                            <benefit.icon size={26} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-black text-gray-900 text-lg mb-2">{benefit.title}</h4>
-                                            <p className="text-gray-500 text-sm leading-relaxed">{benefit.text}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Testimonials */}
-                        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.3s'}}>
-                            <h2 className="text-3xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                                <MessageSquare className={`text-${theme.primary}`} size={28} />
-                                Gương mặt tiêu biểu
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                {company.testimonials.map((t, i) => (
-                                    <div key={i} className="bg-gray-50/50 rounded-[2.5rem] p-8 relative border border-gray-100 group hover:bg-white hover:shadow-xl transition-all">
-                                        <div className={`absolute -top-5 -right-5 w-14 h-14 ${theme.bg} text-${theme.primary} rounded-full flex items-center justify-center font-black text-4xl opacity-40 group-hover:opacity-100 transition-opacity shadow-lg`}>"</div>
-                                        <p className="text-gray-600 italic mb-8 text-base leading-loose relative z-10">"{t.content}"</p>
-                                        <div className="flex items-center gap-5">
-                                            <div className="p-1 bg-white rounded-full shadow-md">
-                                                <img src={t.avatar} className="w-14 h-14 rounded-full object-cover" alt={t.name} />
                                             </div>
-                                            <div>
-                                                <div className="font-black text-gray-900 text-lg">{t.name}</div>
-                                                <div className={`text-xs text-${theme.primary} font-black uppercase tracking-widest`}>{t.role}</div>
+                                            <div className="flex items-center gap-2 font-black text-gray-700">
+                                                <MapPin size={18} className={`text-${theme.primary}`} />
+                                                {job.location}
                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </>
-                )}
-
-                {activeTab === 'culture' && (
-                    <>
-                        {/* Culture Gallery Grid */}
-                        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.1s'}}>
-                            <h2 className="text-3xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                                <Play className={`text-${theme.primary}`} fill="currentColor" size={24} />
-                                Bộ sưu tập Văn hóa
-                            </h2>
-                            <div className="grid grid-cols-2 gap-6 mb-6">
-                                <div className={`aspect-video rounded-[2rem] overflow-hidden shadow-xl group border-2 ${activePlanId === 'premium' ? 'border-amber-200 shadow-amber-500/10' : 'border-transparent'}`}>
-                                    <img src={company.gallery[0]} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt="Office 1" />
-                                </div>
-                                <div className={`aspect-video rounded-[2rem] overflow-hidden shadow-xl group border-2 ${activePlanId === 'premium' ? 'border-amber-200 shadow-amber-500/10' : 'border-transparent'}`}>
-                                    <img src={company.gallery[1]} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt="Office 2" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className={`aspect-square rounded-[2rem] overflow-hidden shadow-xl group border-2 ${activePlanId === 'premium' ? 'border-amber-200 shadow-amber-500/10' : 'border-transparent'}`}>
-                                    <img src={company.gallery[2]} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt="Activity 1" />
-                                </div>
-                                <div className={`aspect-square rounded-[2rem] overflow-hidden shadow-xl group border-2 ${activePlanId === 'premium' ? 'border-amber-200 shadow-amber-500/10' : 'border-transparent'}`}>
-                                    <img src={company.gallery[3]} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt="Activity 2" />
-                                </div>
-                                <div className="aspect-square rounded-[2rem] bg-gray-950 flex flex-col items-center justify-center text-white p-6 text-center cursor-pointer hover:bg-gray-900 transition-all group overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <Instagram size={40} className={`mb-3 group-hover:animate-bounce group-hover:text-${theme.primary} transition-colors`} />
-                                    <div className="text-xs font-black uppercase tracking-[0.2em]">Khám phá thêm</div>
-                                    <div className="text-[10px] opacity-60 mt-2 font-bold tracking-widest">@abctech_life</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Products Showcase */}
-                        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.2s'}}>
-                            <h2 className="text-3xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                                <Sparkles className={`text-${theme.primary}`} size={28} />
-                                Sản phẩm nổi bật
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                {company.products.map((p, i) => (
-                                    <div key={i} className="group cursor-pointer">
-                                        <div className={`relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl border-2 ${activePlanId === 'premium' ? 'border-amber-100' : 'border-transparent hover:border-white/50'} transition-all`}>
-                                            <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition duration-1000" alt={p.name} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/20 to-transparent flex items-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                                                <button className={`bg-white text-gray-900 font-black py-4 px-8 rounded-2xl flex items-center gap-3 shadow-2xl transition-all hover:bg-${theme.primary} hover:text-white group/btn animate-shine`}>
-                                                    Chi tiết dự án <ChevronRight size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <h4 className={`font-black text-2xl text-gray-900 group-hover:text-${theme.primary} transition-colors tracking-tight`}>{p.name}</h4>
-                                        <p className="text-gray-500 text-sm mt-2 leading-relaxed font-medium">{p.desc}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Recruitment Process */}
-                        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-xl border border-white/50 p-10 cascade-item transition-all hover:shadow-2xl" style={{animationDelay: '0.3s'}}>
-                            <h2 className="text-3xl font-black text-gray-900 mb-12 flex items-center gap-4">
-                                <Calendar className={`text-${theme.primary}`} size={28} />
-                                Quy trình tuyển dụng
-                            </h2>
-                            <div className="relative pt-6">
-                                <div className="absolute top-[60px] left-0 w-full h-1 bg-gray-100 hidden md:block rounded-full"></div>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 relative">
-                                    {company.process.map((p, i) => (
-                                        <div key={i} className="flex md:flex-col items-center gap-6 text-center group">
-                                            <div className={`w-20 h-20 bg-white border-4 ${theme.bg} rounded-[2rem] flex items-center justify-center text-${theme.primary} shadow-xl z-10 transition-all duration-500 group-hover:border-${theme.primary} group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:rotate-3`}>
-                                                <p.icon size={32} />
-                                            </div>
-                                            <div className="text-left md:text-center">
-                                                <div className={`text-[10px] font-black text-${theme.primary} uppercase tracking-[0.2em] mb-2`}>Bước {i+1}</div>
-                                                <h4 className="font-black text-gray-900 text-lg mb-2">{p.step}</h4>
-                                                <p className="text-xs text-gray-500 font-medium leading-relaxed opacity-80">{p.desc}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-
                 {activeTab === 'jobs' && (
-                    <div className="cascade-item" style={{animationDelay: '0.1s'}}>
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Vị trí đang tuyển dụng</h2>
-                            <div className="text-sm font-bold text-gray-400">{jobs.length} jobs Available</div>
+                    <div className="space-y-8 cascade-item">
+                        <div className="flex items-center justify-between px-6">
+                            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Vị trí đang tuyển</h2>
+                            <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl text-sm font-bold text-gray-500">
+                                <Zap size={16} /> {jobs.length} Cơ hội
+                            </div>
                         </div>
 
-                        <div className="space-y-6">
-                            {jobs.map((job, idx) => (
-                            <div key={job.id} className={`group p-8 bg-white/80 backdrop-blur-xl border-2 border-white/50 rounded-[2.5rem] hover:border-${theme.primary} hover:shadow-2xl hover:shadow-${theme.secondary}-500/10 transition-all duration-500 cascade-item shadow-xl ${activePlanId === 'premium' ? 'animate-shine' : ''}`} style={{animationDelay: `${0.2 + idx * 0.1}s`}}>
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                        <div className="grid grid-cols-1 gap-6">
+                            {jobs.map((job) => (
+                            <div key={job.id} className="group relative">
+                                <div className={`absolute -inset-1 bg-gradient-to-r from-${theme.primary}/20 to-${theme.secondary}-500/20 rounded-[2.5rem] blur opacity-0 group-hover:opacity-100 transition duration-500`}></div>
+                                <div className="relative bg-white rounded-[2rem] p-8 border border-gray-100 group-hover:border-transparent transition-all shadow-sm hover:shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-8">
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <h3 className={`font-black text-2xl text-gray-900 group-hover:text-${theme.primary} transition-colors tracking-tight`}>
-                                                {job.title}
-                                            </h3>
-                                            {job.isNew && (
-                                                <span className={`bg-${theme.primary}/10 text-${theme.primary} text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-${theme.primary}/20 shadow-sm`}>New</span>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-gray-500 mb-6 font-medium">
-                                            <div className="flex items-center gap-2 text-green-600 font-black px-4 py-1.5 bg-green-50 rounded-full border border-green-100">
-                                                <DollarSign size={18} />
-                                                {job.salary}
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <span className={`bg-${theme.bg} text-${theme.primary} text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest`}>
+                                                Full-time
+                                            </span>
+                                            <span className="text-gray-300">•</span>
+                                            <div className="flex items-center gap-2 text-ptit-red font-black text-sm">
+                                                <DollarSign size={16} /> 
+                                                {job.salaryMin} - {job.salaryMax} Triệu
                                             </div>
+                                        </div>
+                                        <h3 className="text-2xl font-black text-gray-900 mb-6 group-hover:text-ptit-red transition-colors tracking-tight">
+                                            {job.title}
+                                        </h3>
+                                        <div className="flex flex-wrap gap-6 text-sm font-bold text-gray-500 mb-6">
                                             <div className="flex items-center gap-2 font-black text-gray-700">
                                                 <MapPin size={18} className={`text-${theme.primary}`} />
                                                 {job.location}
                                             </div>
                                             <div className="flex items-center gap-2 opacity-80">
                                                 <Clock size={18} />
-                                                Hạn nộp: {job.deadline}
+                                                Hạn nộp: {new Date(job.expiredAt).toLocaleDateString()}
                                             </div>
-                                        </div>
-                                        <div className="flex flex-wrap gap-3">
-                                        {job.tags.map((tag, idx) => (
-                                            <span key={idx} className={`bg-white text-gray-400 text-[11px] px-4 py-1.5 rounded-xl font-black uppercase tracking-[0.15em] border border-gray-100 group-hover:border-${theme.primary}/30 group-hover:text-${theme.primary} transition-all shadow-sm`}>
-                                            {tag}
-                                            </span>
-                                        ))}
                                         </div>
                                     </div>
 
-                                    <Link to={`/job/${job.id}`} className={`bg-gray-950 text-white font-black py-5 px-10 rounded-[1.5rem] hover:bg-${theme.primary} transition-all shadow-xl hover:shadow-2xl hover:shadow-${theme.secondary}-500/40 active:scale-95 whitespace-nowrap text-center animate-shine`}>
+                                    <Link to={`/job/${job.id}`} className={`bg-gray-950 text-white font-black py-5 px-10 rounded-[1.5rem] hover:bg-${theme.primary} transition-all shadow-xl hover:shadow-2xl active:scale-95 whitespace-nowrap text-center animate-shine`}>
                                         Ứng tuyển ngay
                                     </Link>
                                 </div>
@@ -426,13 +232,11 @@ const CompanyDetailPage = () => {
                             ))}
                         </div>
 
-                        <div className="mt-16 text-center py-12 border-2 border-dashed border-gray-200 rounded-[3rem] bg-gray-50/30">
-                            <h3 className="text-xl font-black text-gray-900 mb-3">Bạn chưa tìm thấy vị trí phù hợp?</h3>
-                            <p className="text-gray-400 text-sm font-bold mb-8 opacity-80 uppercase tracking-widest">Chúng tôi luôn đón chào những tài năng mới</p>
-                            <button className={`text-${theme.primary} font-black hover:scale-110 transition-transform flex items-center justify-center gap-3 mx-auto px-8 py-4 bg-white rounded-2xl shadow-xl border border-${theme.primary}/20`}>
-                                Gửi hồ sơ dự tuyển (CV) <ChevronRight size={22} />
-                            </button>
-                        </div>
+                        {jobs.length === 0 && (
+                            <div className="text-center py-20 bg-gray-50 rounded-[3rem]">
+                                <p className="text-gray-400 font-bold uppercase tracking-widest">Hiện chưa có vị trí đang tuyển</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

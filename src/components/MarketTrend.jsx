@@ -1,16 +1,28 @@
 import React from 'react';
 import { TrendingUp, BarChart2, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getFeaturedCategories } from '../services/api';
 
 const MarketTrend = () => {
-  const trends = [
-    { name: "Lập trình Web", jobs: 1240, growth: "+15%", hot: true },
-    { name: "Data Analyst", jobs: 850, growth: "+22%", hot: true },
-    { name: "Digital Marketing", jobs: 1100, growth: "+8%", hot: false },
-    { name: "Kế toán tổng hợp", jobs: 600, growth: "+5%", hot: false },
-    { name: "Quản trị mạng", jobs: 450, growth: "+10%", hot: false },
-    { name: "Tester / QA / QC", jobs: 900, growth: "+12%", hot: false },
-  ];
+  const [trends, setTrends] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchTrends = async () => {
+      try {
+        const data = await getFeaturedCategories(6, 30);
+        setTrends(data || []);
+      } catch (error) {
+        console.error("Error fetching market trends:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrends();
+  }, []);
+
+  if (loading) return <div className="py-16 text-center text-gray-500">Đang tải xu hướng thị trường...</div>;
+
 
   return (
     <section className="py-16 bg-white">
@@ -46,8 +58,8 @@ const MarketTrend = () => {
                            <BarChart2 className="text-gray-400 group-hover:text-ptit-red transition-colors" />
                            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">{trend.growth}</span>
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-ptit-red transition-colors">{trend.name}</h3>
-                        <p className="text-sm text-gray-500">{trend.jobs} việc làm</p>
+                        <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-ptit-red transition-colors">{trend.categoryName}</h3>
+                        <p className="text-sm text-gray-500">{trend.jobCount} việc làm</p>
                      </div>
                  ))}
              </div>

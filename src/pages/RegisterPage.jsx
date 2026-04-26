@@ -1,28 +1,56 @@
 import React, { useState } from 'react';
 import { User, Briefcase, Mail, Lock, ArrowRight, GraduationCap, Sparkles, CheckCircle, Shield, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { register, login } from '../services/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState('candidate'); // 'candidate' or 'employer'
   const [formData, setFormData] = useState({
     fullName: '',
+    userName: '',
     email: '',
     company: '',
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Save to sessionStorage and redirect
-    sessionStorage.setItem('isLoggedIn', 'true');
-    sessionStorage.setItem('userRole', userType === 'employer' ? 'recruiter' : 'candidate');
-    
-    if (userType === 'employer') {
-      navigate('/recruiter/dashboard');
-    } else {
-      navigate('/home');
+    if (formData.password !== formData.confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const apiRole = userType === 'employer' ? 'Recruiter' : 'Candidate';
+      await register({
+        fullName: formData.fullName,
+        userName: formData.userName,
+        email: formData.email,
+        password: formData.password,
+        role: apiRole,
+      });
+
+      // Auto login sau khi đăng ký thành công
+      const loginResult = await login(formData.email, formData.password, apiRole);
+      sessionStorage.setItem('token', loginResult.token);
+      sessionStorage.setItem('isLoggedIn', 'true');
+      sessionStorage.setItem('userRole', userType === 'employer' ? 'recruiter' : 'candidate');
+      sessionStorage.setItem('userEmail', loginResult.user?.email ?? formData.email);
+
+      if (userType === 'employer') {
+        navigate('/recruiter/dashboard');
+      } else {
+        navigate('/home');
+      }
+    } catch (err) {
+      setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,6 +179,21 @@ const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700 block">Tên đăng nhập (username)</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  value={formData.userName}
+                  onChange={(e) => setFormData({...formData, userName: e.target.value})}
+                  className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all shadow-sm"
+                  placeholder="nguyenvana (không dấu, không khoảng trắng)"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 block">Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -227,12 +270,19 @@ const RegisterPage = () => {
               </span>
             </div>
 
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg mt-2"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Tạo tài khoản
-              <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
+              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+              {!loading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
 

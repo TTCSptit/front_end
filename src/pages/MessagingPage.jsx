@@ -5,6 +5,7 @@ import {
   Image as ImageIcon, FileText, User, Bot, Headphones,
   ArrowLeft, Filter, Circle
 } from 'lucide-react';
+import { getConversations, getChatMessages, sendMessage } from '../services/api';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 const mockConversations = [
@@ -55,15 +56,55 @@ const mockConversations = [
 ];
 
 const MessagingPage = ({ role }) => {
-  const [conversations, setConversations] = useState(mockConversations);
-  const [activeId, setActiveId] = useState(1);
+  const [conversations, setConversations] = useState([]);
+  const [activeId, setActiveId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const activeChat = conversations.find(c => c.id === activeId);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const data = await getConversations();
+        setConversations(data.map(c => ({
+          ...c,
+          avatar: c.name.charAt(0),
+          online: true,
+          messages: []
+        })));
+        if (data.length > 0) setActiveId(data[0].id);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    if (activeId) {
+      const fetchMessages = async () => {
+        try {
+          const data = await getChatMessages(activeId);
+          setMessages(data);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      fetchMessages();
+      // Poll for new messages every 5s
+      const interval = setInterval(fetchMessages, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeId]);
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -81,32 +122,19 @@ const MessagingPage = ({ role }) => {
     }
   }, [searchParams]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !activeId) return;
 
-    const newMessage = {
-      id: activeChat.messages.length + 1,
-      text: message,
-      sender: role === 'recruiter' ? 'recruiter' : 'user',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    const updatedConversations = conversations.map(c => {
-      if (c.id === activeId) {
-        return {
-          ...c,
-          messages: [...c.messages, newMessage],
-          lastMessage: message,
-          time: "Just now"
-        };
-      }
-      return c;
-    });
-
-    setConversations(updatedConversations);
-    setMessage("");
+    try {
+      const sentMsg = await sendMessage(activeId, message);
+      setMessages([...messages, sentMsg]);
+      setMessage("");
+    } catch (err) {
+      alert(err.message);
+    }
   };
+
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50 p-4 md:p-6 lg:p-8">
@@ -227,30 +255,35 @@ const MessagingPage = ({ role }) => {
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"
           >
-            {activeChat.messages.map((msg, index) => {
-              const isMine = role === 'recruiter' ? msg.sender === 'recruiter' : msg.sender === 'user';
+            {messages.map((msg, index) => {
+              const isMine = role === 'recruiter' ? msg.senderId !== activeId : msg.senderId === activeId; // Simplified check
+              // Better isMine check using sessionStorage if available
+              const myEmail = sessionStorage.getItem('userEmail');
+              const finalIsMine = msg.senderId !== activeId; 
+
               return (
-                <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`} style={{ animationDelay: `${index * 50}ms` }}>
-                  <div className={`max-w-[70%] group ${isMine ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
+                <div key={msg.id} className={`flex ${finalIsMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`} style={{ animationDelay: `${index * 50}ms` }}>
+                  <div className={`max-w-[70%] group ${finalIsMine ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
                     <div className={`relative px-6 py-4 rounded-3xl text-sm leading-relaxed shadow-sm transition-transform hover:scale-[1.01] ${
-                      isMine 
+                      finalIsMine 
                         ? 'bg-ptit-red text-white rounded-tr-none' 
                         : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
                     }`}>
-                      {msg.text}
-                      {isMine && (
+                      {msg.message}
+                      {finalIsMine && (
                         <div className="absolute -right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <CheckCheck size={14} className="text-ptit-red" />
                         </div>
                       )}
                     </div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
-                      {msg.time}
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
               );
             })}
+
           </div>
 
           {/* Input Area */}
