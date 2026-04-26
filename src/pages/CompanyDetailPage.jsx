@@ -179,11 +179,9 @@ const CompanyDetailPage = () => {
                             <div className="text-gray-600 leading-loose text-justify whitespace-pre-line text-lg mb-12 opacity-90">
                                 {company.description}
                             </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 font-black text-gray-700">
-                                                <MapPin size={18} className={`text-${theme.primary}`} />
-                                                {job.location}
-                                            </div>
+                        </div>
+                    </>
+                )}
                 {activeTab === 'jobs' && (
                     <div className="space-y-8 cascade-item">
                         <div className="flex items-center justify-between px-6">

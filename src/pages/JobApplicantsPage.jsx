@@ -5,7 +5,7 @@ import {
   Star, Clock, MapPin, Briefcase, Filter, Search,
   CheckCircle, XCircle, MessageSquare, Users
 } from 'lucide-react';
-import { getJobApplications, updateApplicationStatus } from '../services/api';
+import { getApplicants, updateApplicationStatus } from '../services/api';
 
 const statusConfig = {
   new: { label: 'Mới', color: 'bg-blue-100 text-blue-700' },
@@ -27,7 +27,7 @@ const JobApplicantsPage = () => {
   useEffect(() => {
     const fetchApplicants = async () => {
       try {
-        const data = await getJobApplications(jobId);
+        const data = await getApplicants(jobId);
         setApplicants(data || []);
       } catch (err) {
         setError(err.message || 'Không thể tải danh sách ứng viên.');
