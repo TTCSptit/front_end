@@ -1,6 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText, Github, BarChart2, MessageCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { chatWithAiStream, getAiSkills } from '../services/aiService';
+import { Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
 const ChatBot = ({ isOpen, onToggle }) => {
   const location = useLocation();
@@ -16,17 +36,69 @@ const ChatBot = ({ isOpen, onToggle }) => {
   const [messages, setMessages] = useState([getInitialMessage()]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'dashboard'
+  const [sessionId] = useState(() => "SESSION-" + Math.random().toString(36).substr(2, 9));
+  const [dashboardData, setDashboardData] = useState({
+    candidate_info: { name: "Chưa rõ", email: "Chưa rõ" },
+    matching_score: 0,
+    extracted_skills: [],
+    missing_skills: []
+  });
+  const [radarData, setRadarData] = useState({
+    labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Soft Skills'],
+    datasets: [{
+      label: 'Cấp độ kỹ năng',
+      data: [0, 0, 0, 0, 0],
+      backgroundColor: 'rgba(239, 68, 68, 0.2)',
+      borderColor: '#ef4444',
+      pointBackgroundColor: '#ef4444',
+    }]
+  });
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const handleFileUpload = (e) => {
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+      fetchSkills();
+    }
+  }, [isOpen, messages]);
+
+  const fetchSkills = async () => {
+    const userId = sessionStorage.getItem('userEmail');
+    if (!userId) return;
+    const data = await getAiSkills(userId);
+    if (data && data.labels && data.labels.length > 0) {
+      setRadarData({
+        labels: data.labels,
+        datasets: [{
+          label: 'Cấp độ kỹ năng',
+          data: data.data,
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          borderColor: '#ef4444',
+          pointBackgroundColor: '#ef4444',
+        }]
+      });
+    }
+  };
+
+  const updateSkillChart = (aiData) => {
+    if (aiData.extracted_skills && aiData.extracted_skills.length > 0) {
+      // Mock update radar chart based on extracted skills for visual feedback
+      // In a real app, the /skills API would return the updated values
+      fetchSkills();
+    }
+  };
+
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     e.target.value = ''; // Reset input
 
     const newUserMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: `${file.name}`,
       sender: 'user',
       isFile: true,
@@ -35,22 +107,8 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
     setMessages(prev => [...prev, newUserMessage]);
     setIsTyping(true);
-
-    // Mock analysis response
-    setTimeout(() => {
-      const botResponseText = `Cảm ơn bạn đã tải lên CV: **${file.name}**!\n\nDựa trên phân tích kỹ năng, tôi thấy bạn rất tiềm năng. Đây là lộ trình học tập & phát triển tôi thiết kế riêng cho định hướng Web Developer của bạn:\n\n[ROADMAP] Nâng cao ReactJS, Học thêm Node.js cốt lõi, Tìm hiểu Kiến trúc Microservices, Luyện tập thuật toán phỏng vấn [/ROADMAP]\n\nBạn có muốn tôi tìm một số việc làm phù hợp với lộ trình này không?`;
-      
-      const newBotMessage = {
-        id: messages.length + 2,
-        text: botResponseText,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, newBotMessage]);
-      scrollToBottom();
-      setIsTyping(false);
-    }, 2500);
+    
+    await processChatMessage("Tôi vừa gửi CV của mình, nhờ AI phân tích và tư vấn lộ trình giúp tôi.", file);
   };
 
   // const toggleChat = () => setIsOpen(!isOpen);
@@ -83,9 +141,10 @@ const ChatBot = ({ isOpen, onToggle }) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
+    const messageText = inputValue;
     const newUserMessage = {
-      id: messages.length + 1,
-      text: inputValue,
+      id: Date.now(),
+      text: messageText,
       sender: 'user',
       timestamp: new Date()
     };
@@ -94,53 +153,84 @@ const ChatBot = ({ isOpen, onToggle }) => {
     setInputValue("");
     setIsTyping(true);
 
-    // Mock response logic
-    setTimeout(() => {
-      let botResponseText = "Xin lỗi, tôi chưa hiểu ý bạn. Bạn có thể thử hỏi về 'tìm việc', 'lương', hoặc 'liên hệ' không?";
-      const lowerInput = newUserMessage.text.toLowerCase();
+    processChatMessage(messageText);
+  };
 
-      if (isRecruiter) {
-        // Recruiter-specific responses
-        if (lowerInput.includes('đăng tin') || lowerInput.includes('post')) {
-          botResponseText = "Để đăng tin, bạn có thể vào Quản lý tin → Đăng tin mới. Tin sẽ được duyệt trong 24h. Cần hỗ trợ thêm không?";
-        } else if (lowerInput.includes('ứng viên') || lowerInput.includes('cv')) {
-          botResponseText = "Bạn có thể xem danh sách ứng viên trong mục Quản lý tin → chọn tin → Xem ứng viên. Có thể lọc theo trạng thái!";
-        } else if (lowerInput.includes('liên hệ') || lowerInput.includes('hotline')) {
-          botResponseText = "Hotline hỗ trợ NTD: 1900 9999. Email: recruiter@ptitjobs.vn. Thời gian: 8h-22h hàng ngày.";
-        } else if (lowerInput.includes('xin chào') || lowerInput.includes('hi') || lowerInput.includes('hello')) {
-          botResponseText = "Chào bạn! Tôi sẵn sàng hỗ trợ bạn về tuyển dụng. Bạn cần tư vấn gì?";
-        } else {
-          botResponseText = "Tôi có thể hỗ trợ về: đăng tin, quản lý ứng viên, hoặc liên hệ hotline. Bạn cần gì?";
-        }
-      } else {
-        // Candidate responses
-        if (lowerInput.includes('tìm việc') || lowerInput.includes('job') || lowerInput.includes('công việc')) {
-          botResponseText = "Tôi có thể giúp bạn tìm việc! Bạn đang quan tâm đến vị trí nào? (Developer, Designer, Marketing...)";
-        } else if (lowerInput.includes('lộ trình') || lowerInput.includes('roadmap') || lowerInput.includes('học')) {
-          botResponseText = "Đây là lộ trình mẫu tôi thiết kế tự động cho bạn bằng Generative UI:\n\n[ROADMAP] JavaScript Cơ bản, ReactJS & Tailwind, Tối ưu Web Performance, Giải thuật & Phỏng vấn [/ROADMAP]\n\nBạn muốn bắt đầu từ mốc nào?";
-        } else if (lowerInput.includes('lương') || lowerInput.includes('salary')) {
-          botResponseText = "Mức lương cho các vị trí phổ biến hiện tại dao động từ 10 - 30 triệu VNĐ tùy vào kinh nghiệm.";
-        } else if (lowerInput.includes('liên hệ') || lowerInput.includes('contact')) {
-          botResponseText = "Bạn có thể liên hệ với chúng tôi qua email: contact@ptitjobs.vn hoặc hotline: 1900 1234.";
-        } else if (lowerInput.includes('xin chào') || lowerInput.includes('hi') || lowerInput.includes('hello')) {
-          botResponseText = "Chào bạn! Gõ chữ 'lộ trình', 'quiz', hoặc 'code' để trải nghiệm các Component React trực tiếp trong chat nhé!";
-        } else if (lowerInput.includes('quiz') || lowerInput.includes('trắc nghiệm')) {
-          botResponseText = "Được thôi, cùng khởi động với câu hỏi này nhé:\n\n[QUIZ] Trong React, Hook nào được dùng để quản lý State? | useEffect | useMemo | useState | useContext [/QUIZ]";
-        } else if (lowerInput.includes('code') || lowerInput.includes('thử thách') || lowerInput.includes('bài tập')) {
-          botResponseText = "Tuyệt. Hãy hoàn thành bài tập ngay trong khung giao diện dưới đây:\n\n[CODE_EDITOR] Viết hàm isPalindrome(str) trả về true nếu chuỗi đối xứng. | javascript [/CODE_EDITOR]";
+  const processChatMessage = async (text, file = null) => {
+    const userId = sessionStorage.getItem('userEmail') || 'guest';
+    const botMsgId = Date.now() + 1;
+    
+    // Add empty bot message for streaming
+    setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot', timestamp: new Date() }]);
+
+    try {
+      const stream = await chatWithAiStream(text, sessionId, userId, file);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      
+      let currentContent = "";
+      let isReadingData = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            
+            if (data === '[DONE]') {
+              setIsTyping(false);
+              break;
+            } else if (data === '---DATA---') {
+              isReadingData = true;
+              continue;
+            } else if (isReadingData) {
+              try {
+                const json = JSON.parse(data);
+                if (json.matching_score !== undefined) {
+                  setDashboardData(json);
+                  updateSkillChart(json);
+                  // Tự động chuyển sang tab Dashboard nếu có dữ liệu mới từ CV
+                  if (file) setActiveTab('dashboard');
+                }
+              } catch (e) {
+                console.error("Error parsing AI data JSON", e);
+              }
+              isReadingData = false;
+            } else {
+              const textChunk = data.replace(/\\n/g, '\n');
+              currentContent += textChunk;
+              setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, text: currentContent } : m));
+              scrollToBottom();
+            }
+          }
         }
       }
+    } catch (error) {
+      console.error("Chat Error:", error);
+      setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, text: "Xin lỗi, đã có lỗi kết nối tới hệ thống AI. Vui lòng thử lại sau!" } : m));
+      setIsTyping(false);
+    }
+  };
 
-      const newBotMessage = {
-        id: messages.length + 2,
-        text: botResponseText,
-        sender: 'bot',
+  const promptGithub = () => {
+    const gh_url = prompt("Nhập link Github hoặc username của bạn (vd: microsoft):");
+    if (gh_url) {
+      const text = `Review giúp mình profile github này với: ${gh_url}`;
+      const newUserMessage = {
+        id: Date.now(),
+        text: text,
+        sender: 'user',
         timestamp: new Date()
       };
-      
-      setMessages(prev => [...prev, newBotMessage]);
-      setIsTyping(false);
-    }, 1500);
+      setMessages(prev => [...prev, newUserMessage]);
+      setIsTyping(true);
+      processChatMessage(text);
+    }
   };
 
   const renderMessageContent = (text) => {
@@ -246,6 +336,12 @@ const ChatBot = ({ isOpen, onToggle }) => {
               </div>
             </div>
             <div className="flex gap-2">
+               {!isRecruiter && (
+                 <button onClick={() => setActiveTab(activeTab === 'chat' ? 'dashboard' : 'chat')} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold bg-white/10">
+                   {activeTab === 'chat' ? <BarChart2 size={16} /> : <MessageCircle size={16} />}
+                   {activeTab === 'chat' ? 'Dashboard' : 'Chat'}
+                 </button>
+               )}
                <button onClick={onToggle} className="p-1 hover:bg-white/20 rounded-full transition-colors" title="Minimize">
                 <Minus size={18} />
               </button>
@@ -255,45 +351,111 @@ const ChatBot = ({ isOpen, onToggle }) => {
             </div>
           </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 scroll-smooth">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${
-                    msg.sender === 'user'
-                      ? 'bg-red-500 text-white rounded-tr-none'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
-                  }`}
-                >
-                  {msg.isFile ? (
-                    <div className="flex items-center gap-2">
-                       <FileText size={16} className="text-white" />
-                       <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
+          {/* Tabs Content */}
+          <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
+            {activeTab === 'chat' ? (
+              /* Messages Area */
+              <div className="flex-1 overflow-y-auto p-4 scroll-smooth">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${
+                        msg.sender === 'user'
+                          ? 'bg-red-500 text-white rounded-tr-none'
+                          : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
+                      }`}
+                    >
+                      {msg.isFile ? (
+                        <div className="flex items-center gap-2">
+                           <FileText size={16} className="text-white" />
+                           <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
+                        </div>
+                      ) : (
+                        <div className="text-sm leading-relaxed whitespace-pre-line break-words">{renderMessageContent(msg.text)}</div>
+                      )}
+                      <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="text-sm leading-relaxed whitespace-pre-line break-words">{renderMessageContent(msg.text)}</div>
-                  )}
-                  <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
+                  </div>
+                ))}
+                
+                 {isTyping && (
+                  <div className="flex justify-start mb-4">
+                    <div className="bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none p-3 shadow-sm flex items-center gap-1">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            ))}
-            
-             {isTyping && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none p-3 shadow-sm flex items-center gap-1">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            ) : (
+              /* Dashboard Area */
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 animate-fade-in">
+                {/* Score Card */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center justify-center gap-2">
+                    <BarChart2 size={14} /> Matching Score
+                  </h4>
+                  <div className="relative inline-flex items-center justify-center w-24 h-24 mb-3">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-100" />
+                      <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - dashboardData.matching_score / 100)} className="text-red-500 transition-all duration-1000" />
+                    </svg>
+                    <span className="absolute text-2xl font-black text-gray-800">{dashboardData.matching_score}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-left">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block">Tên</span>
+                      <span className="text-xs font-bold truncate block">{dashboardData.candidate_info.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 block">Email</span>
+                      <span className="text-xs font-bold truncate block">{dashboardData.candidate_info.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Radar Chart Card */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 h-[220px]">
+                   <h4 className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-2">
+                    <Sparkles size={14} className="text-yellow-500" /> Ma Trận Kỹ Năng
+                  </h4>
+                  <div className="h-full">
+                    <Radar 
+                      data={radarData} 
+                      options={{ 
+                        scales: { r: { min: 0, max: 5, ticks: { display: false } } },
+                        plugins: { legend: { display: false } },
+                        maintainAspectRatio: false
+                      }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Skills Tags */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Kỹ năng hiện có</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dashboardData.extracted_skills.length > 0 ? dashboardData.extracted_skills.map((s, i) => (
+                      <span key={i} className="px-2 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-bold border border-green-100">{s}</span>
+                    )) : <span className="text-[10px] text-gray-400 italic">Chưa có dữ liệu</span>}
+                  </div>
+                  
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-3">Cần cải thiện</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dashboardData.missing_skills.length > 0 ? dashboardData.missing_skills.map((s, i) => (
+                      <span key={i} className="px-2 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100">{s}</span>
+                    )) : <span className="text-[10px] text-gray-400 italic">Chưa có dữ liệu</span>}
+                  </div>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
@@ -315,6 +477,14 @@ const ChatBot = ({ isOpen, onToggle }) => {
                     title="Đính kèm CV để phân tích"
                   >
                     <Paperclip size={18} />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={promptGithub}
+                    className="p-1.5 text-gray-500 hover:text-gray-800 transition-colors"
+                    title="Đánh giá Github"
+                  >
+                    <Github size={18} />
                   </button>
                 </>
               )}

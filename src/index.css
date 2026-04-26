@@ -59,6 +59,10 @@
   .animate-fade-in-up {
     animation: fadeInUp 0.5s ease-out forwards;
   }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
   
   .animate-float {
     animation: float 3s ease-in-out infinite;
@@ -114,6 +118,15 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 
