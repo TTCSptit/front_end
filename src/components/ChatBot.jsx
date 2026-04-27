@@ -75,13 +75,24 @@ const ChatBot = ({ isOpen, onToggle }) => {
     };
   }, [isOpen]);
 
+  const retryCountRef = useRef(0);
+  const maxRetries = 5;
+
   const initWebSocket = () => {
     if (socketRef.current?.readyState === WebSocket.OPEN) return;
+    if (retryCountRef.current >= maxRetries) {
+      console.warn("AI WebSocket: Max retries reached");
+      return;
+    }
 
     const userId = sessionStorage.getItem('userEmail') || 'guest';
     const ws = createAiWebSocket(userId);
 
-    ws.onopen = () => console.log("AI WebSocket Connected");
+    ws.onopen = () => {
+      console.log("AI WebSocket Connected");
+      retryCountRef.current = 0; // Reset counter
+    };
+
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       
@@ -106,8 +117,12 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
     ws.onclose = () => {
       console.log("AI WebSocket Disconnected");
-      // Thử kết nối lại sau 3s nếu bot vẫn đang mở
-      if (isOpen) setTimeout(initWebSocket, 3000);
+      // Thử kết nối lại với delay tăng dần nếu bot vẫn đang mở
+      if (isOpen && retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 10000);
+        setTimeout(initWebSocket, delay);
+      }
     };
 
     socketRef.current = ws;
