@@ -60,6 +60,6 @@ export const getAiChatHistory = async (userId) => {
  * Tạo kết nối WebSocket tới AI qua .NET Backend proxy
  */
 export const createAiWebSocket = (userId) => {
-  const wsUrl = `wss://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api/Ai/ws/chat/${userId || 'guest'}`;
+  const wsUrl = `wss://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api/Ai/ws-chat/${userId || 'guest'}`;
   return new WebSocket(wsUrl);
 };

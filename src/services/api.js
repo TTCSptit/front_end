@@ -8,21 +8,29 @@ const BASE_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azureweb
 // Helper: lấy token từ sessionStorage
 const getToken = () => sessionStorage.getItem('token');
 
-// Helper: fetch có kèm Authorization header tự động
+// Helper: fetch có kèm Authorization header tự động và Timeout
 const apiFetch = async (endpoint, options = {}) => {
   const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
+  const timeout = 15000; // 15 giây timeout
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    };
 
-  const data = await response.json().catch(() => null);
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: controller.signal
+    });
+
+    clearTimeout(id);
+    const data = await response.json().catch(() => null);
 
   if (!response.ok) {
     // Lấy message từ ApiResponse chuẩn của backend
