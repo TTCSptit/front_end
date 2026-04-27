@@ -112,6 +112,13 @@ const ChatBot = ({ isOpen, onToggle }) => {
         setIsTyping(false);
         currentBotContentRef.current = "";
         currentBotMsgIdRef.current = null;
+        
+        // Handle data if present in end message
+        const aiData = data.data;
+        if (aiData && aiData.matching_score !== undefined) {
+          setDashboardData(aiData);
+          updateSkillChart(aiData);
+        }
       }
     };
 
