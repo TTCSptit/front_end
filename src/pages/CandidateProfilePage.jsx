@@ -31,11 +31,30 @@ const CandidateProfilePage = () => {
   const fetchProfile = async () => {
     try {
       const data = await getMyProfile();
+      // Map backend DTO to frontend state
       setProfile({
-        ...data,
-        skills: data.skills || [],
-        experience: data.experience || [],
-        education: data.education || []
+        fullName: data.fullName || '',
+        headline: data.headline || '', // Backend might not have this yet, or it's part of AboutMe
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.location || '',
+        summary: data.aboutMe || '',
+        skills: (data.skills || []).map(s => typeof s === 'string' ? s : s.name),
+        experience: (data.workExperiences || []).map(exp => ({
+          id: exp.id,
+          company: exp.companyName,
+          position: exp.position,
+          period: `${exp.startDate ? exp.startDate.substring(0, 7) : ''} - ${exp.endDate ? exp.endDate.substring(0, 7) : 'present'}`,
+          description: exp.description
+        })),
+        education: (data.educations || []).map(edu => ({
+          id: edu.id,
+          school: edu.schoolName,
+          degree: edu.degree,
+          period: `${edu.startDate ? edu.startDate.substring(0, 4) : ''} - ${edu.endDate ? edu.endDate.substring(0, 4) : ''}`
+        })),
+        cvUrl: data.cvurl || '',
+        hasCv: !!data.cvurl
       });
     } catch (err) {
       setError(err.message || 'Không thể tải thông tin hồ sơ.');
@@ -50,9 +69,41 @@ const CandidateProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      await updateProfile(profile);
+      // Map frontend state back to backend DTO
+      const dto = {
+        fullName: profile.fullName,
+        email: profile.email,
+        phone: profile.phone,
+        location: profile.address,
+        aboutMe: profile.summary,
+        skills: profile.skills.map(s => (typeof s === 'string' ? { name: s } : s)),
+        educations: profile.education.map(edu => {
+          const years = edu.period.split('-').map(y => y.trim());
+          return {
+            id: typeof edu.id === 'number' && edu.id > 1000000000 ? 0 : edu.id, // Reset temp IDs
+            schoolName: edu.school,
+            degree: edu.degree,
+            startDate: years[0] ? `${years[0]}-01-01` : '2000-01-01',
+            endDate: years[1] && years[1].toLowerCase() !== 'present' ? `${years[1]}-01-01` : null
+          };
+        }),
+        workExperiences: profile.experience.map(exp => {
+          const periods = exp.period.split('-').map(p => p.trim());
+          return {
+            id: typeof exp.id === 'number' && exp.id > 1000000000 ? 0 : exp.id, // Reset temp IDs
+            companyName: exp.company,
+            position: exp.position,
+            description: exp.description,
+            startDate: periods[0] ? (periods[0].includes('/') ? `${periods[0].split('/')[1]}-${periods[0].split('/')[0]}-01` : `${periods[0]}-01-01`) : '2000-01-01',
+            endDate: periods[1] && periods[1].toLowerCase() !== 'present' ? (periods[1].includes('/') ? `${periods[1].split('/')[1]}-${periods[1].split('/')[0]}-01` : `${periods[1]}-01-01`) : null
+          };
+        })
+      };
+
+      await updateProfile(dto);
       setIsEditing(false);
       alert('Đã lưu hồ sơ thành công!');
+      fetchProfile(); // Reload to get IDs and canonical data
     } catch (err) {
       alert(err.message || 'Lưu hồ sơ thất bại.');
     }

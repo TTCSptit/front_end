@@ -110,7 +110,7 @@ const MessagingPage = ({ role }) => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [activeId, activeChat.messages]);
+  }, [activeId, messages]);
 
   useEffect(() => {
     const contactId = searchParams.get('contact');
@@ -135,6 +135,16 @@ const MessagingPage = ({ role }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-ptit-red border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium">Đang tải tin nhắn...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50 p-4 md:p-6 lg:p-8">
@@ -212,8 +222,17 @@ const MessagingPage = ({ role }) => {
 
         {/* Chat Window */}
         <div className="hidden md:flex flex-1 flex-col bg-gray-50/30">
-          {/* Top Bar */}
-          <div className="h-24 bg-white border-b border-gray-100 px-8 flex items-center justify-between shadow-sm z-10">
+          {!activeChat ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                <MessageSquare size={40} />
+              </div>
+              <p className="font-medium">Chọn một cuộc trò chuyện để bắt đầu</p>
+            </div>
+          ) : (
+            <>
+              {/* Top Bar */}
+              <div className="h-24 bg-white border-b border-gray-100 px-8 flex items-center justify-between shadow-sm z-10">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-md bg-gradient-to-br ${
@@ -319,12 +338,19 @@ const MessagingPage = ({ role }) => {
                 </button>
               </div>
             </form>
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Info Panel */}
         <div className="hidden lg:flex w-[300px] border-l border-gray-100 flex-col bg-white">
-          <div className="p-10 text-center">
+          {!activeChat ? (
+            <div className="flex-1 flex items-center justify-center p-10 text-center text-gray-400 text-sm">
+              Thông tin người dùng sẽ hiển thị tại đây
+            </div>
+          ) : (
+            <div className="p-10 text-center">
             <div className="relative inline-block mb-6">
               <div className={`w-28 h-28 rounded-3xl flex items-center justify-center text-white font-black text-4xl shadow-xl shadow-red-100 mx-auto bg-gradient-to-br ${
                 activeChat.avatar.length > 2 ? 'from-ptit-red to-red-400' : 'from-gray-700 to-gray-500'
@@ -376,7 +402,8 @@ const MessagingPage = ({ role }) => {
                   </button>
                </div>
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -13,7 +13,9 @@ const MarketTrend = () => {
         const data = await getFeaturedCategories(6, 30);
         setTrends(data || []);
       } catch (error) {
-        console.error("Error fetching market trends:", error);
+        // Silently handle or warn if no featured categories (often expected if no recent jobs)
+        console.warn("Market trends not available:", error.message);
+        setTrends([]);
       } finally {
         setLoading(false);
       }

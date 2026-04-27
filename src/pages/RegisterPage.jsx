@@ -33,6 +33,7 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
         role: apiRole,
+        companyName: userType === 'employer' ? formData.company : null,
       });
 
       // Auto login sau khi đăng ký thành công
