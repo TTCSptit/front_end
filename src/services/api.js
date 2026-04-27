@@ -32,13 +32,20 @@ const apiFetch = async (endpoint, options = {}) => {
     clearTimeout(id);
     const data = await response.json().catch(() => null);
 
-  if (!response.ok) {
-    // Lấy message từ ApiResponse chuẩn của backend
-    const message = data?.message || `HTTP Error ${response.status}`;
-    throw new Error(message);
-  }
+    if (!response.ok) {
+      // Lấy message từ ApiResponse chuẩn của backend
+      const message = data?.message || `HTTP Error ${response.status}`;
+      throw new Error(message);
+    }
 
-  return data;
+    return data;
+  } catch (err) {
+    clearTimeout(id);
+    if (err.name === 'AbortError') {
+      throw new Error('Kết nối quá hạn (Timeout). Vui lòng kiểm tra mạng!');
+    }
+    throw err;
+  }
 };
 
 // ============================================================
