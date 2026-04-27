@@ -28,6 +28,29 @@ export const chatWithAiStream = async (message, sessionId, userId, cvFile) => {
 };
 
 /**
+ * Upload CV trước khi chat qua WebSocket.
+ * Server parse PDF → lưu Redis 30 phút → trả về { cv_id, preview }
+ * @param {File} file
+ * @returns {{ cv_id: string, preview: string }}
+ */
+export const uploadCvForWs = async (file) => {
+  const formData = new FormData();
+  formData.append('cv_file', file);
+
+  const response = await fetch(`${AI_BASE_URL}/upload-cv`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(err || 'Upload CV thất bại');
+  }
+
+  return await response.json(); // { cv_id, preview }
+};
+
+/**
  * Lấy dữ liệu kỹ năng từ AI Service
  */
 export const getAiSkills = async (userId) => {

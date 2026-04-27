@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText, Github, BarChart2, MessageCircle, Sparkles } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { getAiSkills, createAiWebSocket } from '../services/aiService';
+import { getAiSkills, createAiWebSocket, uploadCvForWs } from '../services/aiService';
 import { Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -38,6 +38,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'dashboard'
   const [sessionId] = useState(() => "SESSION-" + Math.random().toString(36).substr(2, 9));
+  const [cvId, setCvId] = useState(null); // cv_id lưu trong Redis sau khi upload
   const [dashboardData, setDashboardData] = useState({
     candidate_info: { name: "Chưa rõ", email: "Chưa rõ" },
     matching_score: 0,
@@ -168,21 +169,47 @@ const ChatBot = ({ isOpen, onToggle }) => {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    e.target.value = '';
 
-    e.target.value = ''; // Reset input
-
-    const newUserMessage = {
+    // Hiển thị tin nhắn user với tên file
+    const fileUserMsg = {
       id: Date.now(),
-      text: `${file.name}`,
+      text: `📎 ${file.name}`,
       sender: 'user',
       isFile: true,
       timestamp: new Date()
     };
-
-    setMessages(prev => [...prev, newUserMessage]);
+    setMessages(prev => [...prev, fileUserMsg]);
     setIsTyping(true);
-    
-    await processChatMessage("Tôi vừa gửi CV của mình, nhờ AI phân tích và tư vấn lộ trình giúp tôi.", file);
+
+    // Hiển thị bot đang xử lý
+    const processingMsgId = Date.now() + 1;
+    setMessages(prev => [...prev, {
+      id: processingMsgId,
+      text: '⏳ Đang đọc CV của bạn...',
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
+
+    try {
+      const result = await uploadCvForWs(file);
+      setCvId(result.cv_id);
+
+      // Cập nhật tin nhắn bot thành xác nhận
+      setMessages(prev => prev.map(m =>
+        m.id === processingMsgId
+          ? { ...m, text: `✅ Đã tải CV thành công! Bây giờ hãy hỏi tôi bất kỳ điều gì về CV của bạn 😊\n\n**Xác nhận:**\n_${result.preview}_` }
+          : m
+      ));
+    } catch (err) {
+      setMessages(prev => prev.map(m =>
+        m.id === processingMsgId
+          ? { ...m, text: `❌ Lỗi tải CV: ${err.message}` }
+          : m
+      ));
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   // const toggleChat = () => setIsOpen(!isOpen);
@@ -234,25 +261,16 @@ const ChatBot = ({ isOpen, onToggle }) => {
       
       setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot', timestamp: new Date() }]);
       
+      // Gửi kèm cv_id nếu đã upload CV trước đó
       socketRef.current.send(JSON.stringify({
         message: messageText,
-        session_id: sessionId
+        session_id: sessionId,
+        ...(cvId ? { cv_id: cvId } : {})
       }));
     } else {
       console.error("WS not connected");
       setIsTyping(false);
-      // Fallback: Thử kết nối lại và báo lỗi
       initWebSocket();
-    }
-  };
-
-  const processChatMessage = async (text, file = null) => {
-    // Với WebSocket, tin nhắn text được xử lý qua handleSendMessage
-    // Phần file CV tạm thời vẫn dùng REST hoặc xử lý qua base64 trong WS
-    // Ở đây ta giữ logic REST cho file CV nếu cần, hoặc thông báo
-    if (file) {
-       alert("Tính năng gửi CV qua WebSocket đang được nâng cấp. Vui lòng chat để AI hướng dẫn!");
-       setIsTyping(false);
     }
   };
 
