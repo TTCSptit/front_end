@@ -3,7 +3,7 @@
 //  Base URL: .NET backend chạy ở localhost:5227 (hoặc port của bạn)
 // ============================================================
 
-const BASE_URL = 'http://localhost:5227/api';
+const BASE_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api';
 
 // Helper: lấy token từ sessionStorage
 const getToken = () => sessionStorage.getItem('token');

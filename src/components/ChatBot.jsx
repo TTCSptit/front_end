@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText, Github, BarChart2, MessageCircle } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText, Github, BarChart2, MessageCircle, Sparkles } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { chatWithAiStream, getAiSkills } from '../services/aiService';
+import { getAiSkills, createAiWebSocket } from '../services/aiService';
 import { Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -54,6 +54,10 @@ const ChatBot = ({ isOpen, onToggle }) => {
       pointBackgroundColor: '#ef4444',
     }]
   });
+  
+  const socketRef = useRef(null);
+  const currentBotMsgIdRef = useRef(null);
+  const currentBotContentRef = useRef("");
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -62,8 +66,56 @@ const ChatBot = ({ isOpen, onToggle }) => {
     if (isOpen) {
       scrollToBottom();
       fetchSkills();
+      initWebSocket();
     }
-  }, [isOpen, messages]);
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
+  }, [isOpen]);
+
+  const initWebSocket = () => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+
+    const userId = sessionStorage.getItem('userEmail') || 'guest';
+    const ws = createAiWebSocket(userId);
+
+    ws.onopen = () => console.log("AI WebSocket Connected");
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'content') {
+        currentBotContentRef.current += data.content;
+        setMessages(prev => prev.map(m => 
+          m.id === currentBotMsgIdRef.current ? { ...m, text: currentBotContentRef.current } : m
+        ));
+        scrollToBottom();
+      } else if (data.type === 'data') {
+        const aiData = data.data;
+        if (aiData.matching_score !== undefined) {
+          setDashboardData(aiData);
+          updateSkillChart(aiData);
+        }
+      } else if (data.type === 'end') {
+        setIsTyping(false);
+        currentBotContentRef.current = "";
+        currentBotMsgIdRef.current = null;
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("AI WebSocket Disconnected");
+      // Thử kết nối lại sau 3s nếu bot vẫn đang mở
+      if (isOpen) setTimeout(initWebSocket, 3000);
+    };
+
+    socketRef.current = ws;
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchSkills = async () => {
     const userId = sessionStorage.getItem('userEmail');
@@ -153,67 +205,32 @@ const ChatBot = ({ isOpen, onToggle }) => {
     setInputValue("");
     setIsTyping(true);
 
-    processChatMessage(messageText);
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      const botMsgId = Date.now() + 1;
+      currentBotMsgIdRef.current = botMsgId;
+      currentBotContentRef.current = "";
+      
+      setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot', timestamp: new Date() }]);
+      
+      socketRef.current.send(JSON.stringify({
+        message: messageText,
+        session_id: sessionId
+      }));
+    } else {
+      console.error("WS not connected");
+      setIsTyping(false);
+      // Fallback: Thử kết nối lại và báo lỗi
+      initWebSocket();
+    }
   };
 
   const processChatMessage = async (text, file = null) => {
-    const userId = sessionStorage.getItem('userEmail') || 'guest';
-    const botMsgId = Date.now() + 1;
-    
-    // Add empty bot message for streaming
-    setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot', timestamp: new Date() }]);
-
-    try {
-      const stream = await chatWithAiStream(text, sessionId, userId, file);
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      
-      let currentContent = "";
-      let isReadingData = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim();
-            
-            if (data === '[DONE]') {
-              setIsTyping(false);
-              break;
-            } else if (data === '---DATA---') {
-              isReadingData = true;
-              continue;
-            } else if (isReadingData) {
-              try {
-                const json = JSON.parse(data);
-                if (json.matching_score !== undefined) {
-                  setDashboardData(json);
-                  updateSkillChart(json);
-                  // Tự động chuyển sang tab Dashboard nếu có dữ liệu mới từ CV
-                  if (file) setActiveTab('dashboard');
-                }
-              } catch (e) {
-                console.error("Error parsing AI data JSON", e);
-              }
-              isReadingData = false;
-            } else {
-              const textChunk = data.replace(/\\n/g, '\n');
-              currentContent += textChunk;
-              setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, text: currentContent } : m));
-              scrollToBottom();
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Chat Error:", error);
-      setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, text: "Xin lỗi, đã có lỗi kết nối tới hệ thống AI. Vui lòng thử lại sau!" } : m));
-      setIsTyping(false);
+    // Với WebSocket, tin nhắn text được xử lý qua handleSendMessage
+    // Phần file CV tạm thời vẫn dùng REST hoặc xử lý qua base64 trong WS
+    // Ở đây ta giữ logic REST cho file CV nếu cần, hoặc thông báo
+    if (file) {
+       alert("Tính năng gửi CV qua WebSocket đang được nâng cấp. Vui lòng chat để AI hướng dẫn!");
+       setIsTyping(false);
     }
   };
 
