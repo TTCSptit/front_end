@@ -96,27 +96,66 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
-      if (data.type === 'content') {
-        currentBotContentRef.current += data.content;
-        setMessages(prev => prev.map(m => 
-          m.id === currentBotMsgIdRef.current ? { ...m, text: currentBotContentRef.current } : m
+
+      // --- Xử lý background actions từ Redis (job_hunt, background_update) ---
+      if (data.action) {
+        if (data.action === 'job_hunt') {
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            text: `🔔 ${data.message}`,
+            sender: 'bot',
+            timestamp: new Date()
+          }]);
+        } else if (data.action === 'background_update') {
+          fetchSkills();
+        }
+        return;
+      }
+
+      // --- Status (AI đang suy nghĩ / các bước LangGraph) ---
+      if (data.type === 'status' || data.status) {
+        const statusText = data.status || data.message || '';
+        if (currentBotMsgIdRef.current) {
+          setMessages(prev => prev.map(m =>
+            m.id === currentBotMsgIdRef.current ? { ...m, statusText, text: '' } : m
+          ));
+        }
+        return;
+      }
+
+      // --- Content streaming ---
+      if (data.type === 'content' || data.chunk !== undefined) {
+        const chunk = data.content ?? data.chunk ?? '';
+        currentBotContentRef.current += chunk;
+        setMessages(prev => prev.map(m =>
+          m.id === currentBotMsgIdRef.current
+            ? { ...m, text: currentBotContentRef.current, statusText: null }
+            : m
         ));
         scrollToBottom();
-      } else if (data.type === 'data') {
-        const aiData = data.data;
-        if (aiData.matching_score !== undefined) {
-          setDashboardData(aiData);
-          updateSkillChart(aiData);
-        }
-      } else if (data.type === 'end') {
+        return;
+      }
+
+      // --- End / done ---
+      if (data.type === 'end' || data.done) {
         setIsTyping(false);
-        currentBotContentRef.current = "";
+        const aiData = data.data ?? data.ai_data_json;
+        if (aiData) {
+          const parsed = typeof aiData === 'string' ? JSON.parse(aiData) : aiData;
+          if (parsed?.matching_score !== undefined) {
+            setDashboardData(parsed);
+            updateSkillChart(parsed);
+          }
+        }
+        currentBotContentRef.current = '';
         currentBotMsgIdRef.current = null;
-        
-        // Handle data if present in end message
+        return;
+      }
+
+      // --- Legacy: data packet ---
+      if (data.type === 'data') {
         const aiData = data.data;
-        if (aiData && aiData.matching_score !== undefined) {
+        if (aiData?.matching_score !== undefined) {
           setDashboardData(aiData);
           updateSkillChart(aiData);
         }
@@ -159,9 +198,23 @@ const ChatBot = ({ isOpen, onToggle }) => {
   };
 
   const updateSkillChart = (aiData) => {
-    if (aiData.extracted_skills && aiData.extracted_skills.length > 0) {
-      // Mock update radar chart based on extracted skills for visual feedback
-      // In a real app, the /skills API would return the updated values
+    // Ưu tiên dùng skill_matrix trả về trực tiếp từ AI để có phản hồi tức thì
+    if (aiData.skill_matrix) {
+      const labels = Object.keys(aiData.skill_matrix);
+      const dataValues = Object.values(aiData.skill_matrix);
+      
+      setRadarData({
+        labels: labels,
+        datasets: [{
+          label: 'Cấp độ kỹ năng',
+          data: dataValues,
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          borderColor: '#ef4444',
+          pointBackgroundColor: '#ef4444',
+        }]
+      });
+    } else {
+      // Fallback: gọi API nếu không có skill_matrix trong packet
       fetchSkills();
     }
   };
@@ -195,12 +248,11 @@ const ChatBot = ({ isOpen, onToggle }) => {
       const result = await uploadCvForWs(file);
       setCvId(result.cv_id);
 
-      // Cập nhật tin nhắn bot thành xác nhận
-      setMessages(prev => prev.map(m =>
-        m.id === processingMsgId
-          ? { ...m, text: `✅ Đã tải CV thành công! Bây giờ hãy hỏi tôi bất kỳ điều gì về CV của bạn 😊\n\n**Xác nhận:**\n_${result.preview}_` }
-          : m
-      ));
+      // Xóa tin nhắn "Đang đọc CV..."
+      setMessages(prev => prev.filter(m => m.id !== processingMsgId));
+      
+      // Tự động kích hoạt phân tích, truyền trực tiếp result.cv_id vào
+      processChatMessage("Hãy phân tích file CV tôi vừa gửi và cho tôi lời khuyên về sự nghiệp.", result.cv_id);
     } catch (err) {
       setMessages(prev => prev.map(m =>
         m.id === processingMsgId
@@ -218,75 +270,56 @@ const ChatBot = ({ isOpen, onToggle }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Gửi tin nhắn lập trình (từ Quiz / Code Editor) qua WebSocket thực
   const submitProgrammaticMessage = (textMessage) => {
+    processChatMessage(textMessage);
+  };
+
+  // Hàm core: thêm user msg + gửi WS
+  const processChatMessage = (textMessage, overrideCvId = null) => {
+    if (!textMessage?.trim()) return;
+    
+    // Ưu tiên dùng overrideCvId (vừa upload xong) hoặc cvId hiện có trong state
+    const currentCvId = overrideCvId || cvId;
+    
     const newUserMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: textMessage,
       sender: 'user',
       timestamp: new Date()
     };
-
     setMessages(prev => [...prev, newUserMessage]);
-    setIsTyping(true);
-    
-    setTimeout(() => {
-      let botResponseText = "Tuyệt vời, hệ thống đã nộp kết quả của bạn thành công!";
-      const newBotMessage = { id: messages.length + 2, text: botResponseText, sender: 'bot', timestamp: new Date() };
-      setMessages(prev => [...prev, newBotMessage]);
-      scrollToBottom();
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!inputValue.trim()) return;
-
-    const messageText = inputValue;
-    const newUserMessage = {
-      id: Date.now(),
-      text: messageText,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, newUserMessage]);
-    setInputValue("");
     setIsTyping(true);
 
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       const botMsgId = Date.now() + 1;
       currentBotMsgIdRef.current = botMsgId;
-      currentBotContentRef.current = "";
-      
-      setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot', timestamp: new Date() }]);
-      
-      // Gửi kèm cv_id nếu đã upload CV trước đó
+      currentBotContentRef.current = '';
+      setMessages(prev => [...prev, { id: botMsgId, text: '', statusText: 'AI đang suy nghĩ...', sender: 'bot', timestamp: new Date() }]);
       socketRef.current.send(JSON.stringify({
-        message: messageText,
+        message: textMessage,
         session_id: sessionId,
-        ...(cvId ? { cv_id: cvId } : {})
+        ...(currentCvId ? { cv_id: currentCvId } : {})
       }));
     } else {
-      console.error("WS not connected");
       setIsTyping(false);
       initWebSocket();
     }
+    scrollToBottom();
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    const messageText = inputValue;
+    setInputValue('');
+    processChatMessage(messageText);
   };
 
   const promptGithub = () => {
-    const gh_url = prompt("Nhập link Github hoặc username của bạn (vd: microsoft):");
+    const gh_url = prompt('Nhập link Github hoặc username của bạn (vd: microsoft):');
     if (gh_url) {
-      const text = `Review giúp mình profile github này với: ${gh_url}`;
-      const newUserMessage = {
-        id: Date.now(),
-        text: text,
-        sender: 'user',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, newUserMessage]);
-      setIsTyping(true);
-      processChatMessage(text);
+      processChatMessage(`Review giúp mình profile github này với: ${gh_url}`);
     }
   };
 
@@ -431,7 +464,11 @@ const ChatBot = ({ isOpen, onToggle }) => {
                            <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
                         </div>
                       ) : (
-                        <div className="text-sm leading-relaxed whitespace-pre-line break-words">{renderMessageContent(msg.text)}</div>
+                        <div className="text-sm leading-relaxed whitespace-pre-line break-words">
+                          {msg.statusText && !msg.text ? (
+                            <span className="text-gray-400 italic text-xs">{msg.statusText}</span>
+                          ) : renderMessageContent(msg.text)}
+                        </div>
                       )}
                       <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

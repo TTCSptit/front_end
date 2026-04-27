@@ -3,7 +3,7 @@ import {
   Search, Send, Paperclip, Smile, MoreVertical, 
   CheckCheck, Phone, Video, Search as SearchIcon,
   Image as ImageIcon, FileText, User, Bot, Headphones,
-  ArrowLeft, Filter, Circle
+  ArrowLeft, Filter, Circle, MessageSquare
 } from 'lucide-react';
 import { getConversations, getChatMessages, sendMessage } from '../services/api';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -72,13 +72,17 @@ const MessagingPage = ({ role }) => {
     const fetchConversations = async () => {
       try {
         const data = await getConversations();
-        setConversations(data.map(c => ({
-          ...c,
-          avatar: c.name.charAt(0),
-          online: true,
-          messages: []
-        })));
-        if (data.length > 0) setActiveId(data[0].id);
+        if (data && Array.isArray(data)) {
+          setConversations(data.map(c => ({
+            ...c,
+            avatar: (c.name || "U").charAt(0),
+            online: true,
+            messages: []
+          })));
+          if (data.length > 0) setActiveId(data[0].id);
+        } else {
+          setConversations([]);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -93,9 +97,14 @@ const MessagingPage = ({ role }) => {
       const fetchMessages = async () => {
         try {
           const data = await getChatMessages(activeId);
-          setMessages(data);
+          if (data && Array.isArray(data)) {
+            setMessages(data);
+          } else {
+            setMessages([]);
+          }
         } catch (err) {
           console.error(err);
+          setMessages([]);
         }
       };
       fetchMessages();
@@ -275,11 +284,8 @@ const MessagingPage = ({ role }) => {
             className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"
           >
             {messages.map((msg, index) => {
-              const isMine = role === 'recruiter' ? msg.senderId !== activeId : msg.senderId === activeId; // Simplified check
-              // Better isMine check using sessionStorage if available
               const myEmail = sessionStorage.getItem('userEmail');
-              const finalIsMine = msg.senderId !== activeId; 
-
+              const finalIsMine = msg.senderEmail === myEmail || (msg.senderId !== activeId && msg.senderId !== undefined); 
               return (
                 <div key={msg.id} className={`flex ${finalIsMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`} style={{ animationDelay: `${index * 50}ms` }}>
                   <div className={`max-w-[70%] group ${finalIsMine ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
