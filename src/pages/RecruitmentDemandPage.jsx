@@ -5,78 +5,95 @@ import {
   Search, Filter, ChevronRight, Info,
   Zap, Brain, Target, DollarSign
 } from 'lucide-react';
+import { getFeaturedCategories, getMarketSummary, getMarketInsights } from '../services/api';
 
 const RecruitmentDemandPage = () => {
   const [timeRange, setTimeRange] = useState('30 ngày qua');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [industryDemands, setIndustryDemands] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({ totalJobs: 0, totalCompanies: 0, monthlyNewJobs: 0, growthPercentage: 0 });
+  const [marketInsights, setMarketInsights] = useState({ avgHiringTime: 0, appsPerJob: 0, offerAcceptanceRate: 0 });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const industryDemands = [
-    {
-      id: 1,
-      name: 'Công nghệ thông tin',
-      index: 92,
-      trend: '+15.4%',
-      competition: 'Cao',
-      avgSalary: '25 - 45M',
-      topSkills: ['React', 'NodeJS', 'Cloud'],
-      growthColor: 'text-green-600'
-    },
-    {
-      id: 2,
-      name: 'Marketing / Truyền thông',
-      index: 78,
-      trend: '+8.2%',
-      competition: 'Trung bình',
-      avgSalary: '15 - 30M',
-      topSkills: ['SEO', 'Content', 'Data'],
-      growthColor: 'text-green-600'
-    },
-    {
-      id: 3,
-      name: 'Kinh doanh / Bán hàng',
-      index: 85,
-      trend: '+5.1%',
-      competition: 'Trung bình',
-      avgSalary: '12 - 25M + HH',
-      topSkills: ['Communication', 'CRM', 'Negotiation'],
-      growthColor: 'text-green-600'
-    },
-    {
-      id: 4,
-      name: 'Y tế / Chăm sóc sức khỏe',
-      index: 64,
-      trend: '-2.4%',
-      competition: 'Thấp',
-      avgSalary: '10 - 20M',
-      topSkills: ['Specialization', 'English'],
-      growthColor: 'text-red-600'
-    },
-    {
-      id: 5,
-      name: 'Thiết kế / Sáng tạo',
-      index: 72,
-      trend: '+12.7%',
-      competition: 'Cao',
-      avgSalary: '18 - 35M',
-      topSkills: ['UI/UX', 'Figma', 'Motion'],
-      growthColor: 'text-green-600'
-    }
-  ];
+  React.useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const days = timeRange === '7 ngày qua' ? 7 : timeRange === '30 ngày qua' ? 30 : timeRange === '3 tháng qua' ? 90 : 365;
+        
+        // Parallel fetching
+        const [categoriesData, summaryData, insightsData] = await Promise.all([
+          getFeaturedCategories(15, days),
+          getMarketSummary(),
+          getMarketInsights()
+        ]);
+        
+        setSummaryStats(summaryData);
+        setMarketInsights(insightsData);
+        
+        // Map API data to our UI format
+        const mappedData = categoriesData.map(cat => {
+          const competition = cat.competitionRatio > 15 ? 'Cao' : cat.competitionRatio > 5 ? 'Trung bình' : 'Thấp';
+          
+          return {
+            id: cat.id,
+            name: cat.name,
+            index: Math.min(100, Math.round(cat.totalJobs * 2.5)), 
+            trend: `+${((cat.growth / Math.max(1, cat.totalJobs)) * 100).toFixed(1)}%`,
+            competition: competition,
+            avgSalary: cat.salaryMin && cat.salaryMax 
+              ? `${Math.round(cat.salaryMin/1000000)} - ${Math.round(cat.salaryMax/1000000)}M` 
+              : 'Thỏa thuận',
+            growth: cat.growth,
+            competitionRatio: cat.competitionRatio,
+            topSkills: cat.topSkills && cat.topSkills.length > 0 ? cat.topSkills : ['General'],
+            growthColor: 'text-green-600'
+          };
+        });
+        
+        setIndustryDemands(mappedData);
+      } catch (error) {
+        console.error("Failed to fetch demand data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [timeRange]);
 
-  const careerRoadmaps = [
-    {
-      title: "Lập trình viên Fullstack",
-      duration: "6-12 tháng",
-      steps: ["HTML/CSS/JS Cơ bản", "React/Link/Vue", "NodeJS/Python Backend", "Cloud & DevOps"],
-      demand: "Rất cao"
-    },
-    {
-      title: "Chuyên viên Digital Marketing",
-      duration: "4-8 tháng",
-      steps: ["Content Writing", "SEO Foundation", "Paid Ads (FB/Google)", "Data Analysis"],
-      demand: "Cao"
-    }
-  ];
+  const filteredDemands = industryDemands.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Dynamic career roadmaps based on top industries
+  const careerRoadmaps = industryDemands.slice(0, 2).map(item => {
+    // Basic mapping for duration based on category (can be enhanced further)
+    const durationMap = {
+      'CNTT': '6-12 tháng',
+      'Kinh doanh': '3-6 tháng',
+      'Marketing': '4-8 tháng',
+      'Thiết kế': '5-10 tháng'
+    };
+
+    const duration = durationMap[Object.keys(durationMap).find(k => item.name.includes(k))] || '6-9 tháng';
+    
+    return {
+      id: item.id,
+      title: item.name.includes('Lập trình') ? item.name : `Chuyên viên ${item.name}`,
+      duration: duration,
+      steps: item.topSkills.length > 0 ? item.topSkills : ["Kiến thức nền tảng", "Công cụ chuyên ngành", "Thực hành dự án", "Kỹ năng mềm"],
+      demand: item.index > 80 ? "Rất cao" : "Cao"
+    };
+  });
+
+  const handleOpenAiChat = (topic) => {
+    // We can dispatch a custom event or use a global state to open chatbot with prompt
+    const chatEvent = new CustomEvent('open-chatbot', { 
+      detail: { message: `Phân tích giúp tôi nhu cầu tuyển dụng ngành ${topic} hiện nay.` } 
+    });
+    window.dispatchEvent(chatEvent);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
@@ -121,7 +138,7 @@ const RecruitmentDemandPage = () => {
               <TrendingUp size={28} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900">+12.5%</div>
+              <div className="text-2xl font-bold text-gray-900">+{summaryStats.growthPercentage}%</div>
               <div className="text-sm text-gray-500">Tăng trưởng chung</div>
             </div>
           </div>
@@ -130,8 +147,8 @@ const RecruitmentDemandPage = () => {
               <Users size={28} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900">1,240</div>
-              <div className="text-sm text-gray-500">Doanh nghiệp mới</div>
+              <div className="text-2xl font-bold text-gray-900">{summaryStats.totalCompanies}</div>
+              <div className="text-sm text-gray-500">Doanh nghiệp đăng ký</div>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-4">
@@ -139,8 +156,8 @@ const RecruitmentDemandPage = () => {
               <Zap size={28} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900">45,000+</div>
-              <div className="text-sm text-gray-500">Tin đăng trong tháng</div>
+              <div className="text-2xl font-bold text-gray-900">{summaryStats.totalJobs}</div>
+              <div className="text-sm text-gray-500">Việc làm đang tuyển</div>
             </div>
           </div>
         </div>
@@ -151,11 +168,13 @@ const RecruitmentDemandPage = () => {
             <h3 className="text-lg font-bold text-gray-900">Chi tiết theo Ngành nghề</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Tìm ngành nghề..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-ptit-red"
-              />
+                <input 
+                  type="text" 
+                  placeholder="Tìm ngành nghề..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-ptit-red"
+                />
             </div>
           </div>
           
@@ -173,11 +192,28 @@ const RecruitmentDemandPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {industryDemands.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 transition truncate">
-                    <td className="px-8 py-5">
-                      <div className="font-bold text-gray-900">{item.name}</div>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" className="px-8 py-10 text-center text-gray-500">
+                      Đang tải dữ liệu phân tích...
                     </td>
+                  </tr>
+                ) : filteredDemands.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-8 py-10 text-center text-gray-500">
+                      Không tìm thấy dữ liệu phù hợp.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDemands.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-gray-50/50 transition cursor-pointer"
+                      onClick={() => navigate(`/industry/${item.id}`)}
+                    >
+                      <td className="px-8 py-5">
+                        <div className="font-bold text-gray-900">{item.name}</div>
+                      </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-2 bg-gray-100 rounded-full max-w-[80px]">
@@ -219,13 +255,20 @@ const RecruitmentDemandPage = () => {
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <button className="text-gray-400 hover:text-ptit-red transition">
-                        <ChevronRight size={20} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-6 py-5">
+                        <button 
+                          className="text-gray-400 hover:text-ptit-red transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAiChat(item.name);
+                          }}
+                        >
+                          <Brain size={20} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -239,18 +282,35 @@ const RecruitmentDemandPage = () => {
               Gợi ý Chiến lược Tuyển dụng
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-red-50 rounded-xl border-l-4 border-ptit-red text-sm">
-                <div className="font-bold text-ptit-red mb-1 uppercase tracking-wider text-xs">Cơ hội</div>
-                <p className="text-gray-700 leading-relaxed">
-                  Ngành <strong>Thiết kế / Sáng tạo</strong> đang có xu hướng tăng trưởng mạnh (+12.7%). Đây là thời điểm tốt để đẩy mạnh thu hút nhân tài UI/UX.
-                </p>
-              </div>
-              <div className="p-4 bg-orange-50 rounded-xl border-l-4 border-orange-500 text-sm">
-                <div className="font-bold text-orange-600 mb-1 uppercase tracking-wider text-xs">Lưu ý</div>
-                <p className="text-gray-700 leading-relaxed">
-                  Ngành <strong>CNTT</strong> duy trì độ cạnh tranh "Cao". Cần tối ưu hóa quy trình phỏng vấn và đề xuất mức lương linh hoạt để giữ chân ứng viên.
-                </p>
-              </div>
+              {industryDemands.length > 0 && (
+                <>
+                  {/* Opportunity: Industry with highest growth */}
+                  {(() => {
+                    const topGrowth = [...industryDemands].sort((a, b) => b.growth - a.growth)[0];
+                    return (
+                      <div className="p-4 bg-red-50 rounded-xl border-l-4 border-ptit-red text-sm">
+                        <div className="font-bold text-ptit-red mb-1 uppercase tracking-wider text-xs">Cơ hội</div>
+                        <p className="text-gray-700 leading-relaxed">
+                          Ngành <strong>{topGrowth.name}</strong> đang có xu hướng tăng trưởng tốt. Đây là thời điểm vàng để đẩy mạnh thu hút nhân tài và mở rộng đội ngũ.
+                        </p>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Warning: Industry with highest competition */}
+                  {(() => {
+                    const topComp = [...industryDemands].sort((a, b) => b.competitionRatio - a.competitionRatio)[0];
+                    return (
+                      <div className="p-4 bg-orange-50 rounded-xl border-l-4 border-orange-500 text-sm">
+                        <div className="font-bold text-orange-600 mb-1 uppercase tracking-wider text-xs">Lưu ý</div>
+                        <p className="text-gray-700 leading-relaxed">
+                          Ngành <strong>{topComp.name}</strong> đang có tỉ lệ cạnh tranh cao ({(topComp.competitionRatio || 0).toFixed(1)} ứng viên/tin). Cần tối ưu quy trình lọc hồ sơ để không bỏ lỡ ứng viên tốt.
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
             </div>
           </div>
 
@@ -263,7 +323,7 @@ const RecruitmentDemandPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">Thời gian tuyển trung bình</span>
-                  <span className="font-bold text-gray-900">22 ngày</span>
+                  <span className="font-bold text-gray-900">{marketInsights.avgHiringTime} ngày</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full bg-blue-500 w-[65%]"></div>
@@ -272,7 +332,7 @@ const RecruitmentDemandPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">Số lượng ứng viên / tin đăng</span>
-                  <span className="font-bold text-gray-900">18.5</span>
+                  <span className="font-bold text-gray-900">{marketInsights.appsPerJob}</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full bg-ptit-red w-[45%]"></div>
@@ -281,7 +341,7 @@ const RecruitmentDemandPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">Tỉ lệ chấp nhận offer</span>
-                  <span className="font-bold text-gray-900">72%</span>
+                  <span className="font-bold text-gray-900">{marketInsights.offerAcceptanceRate}%</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 w-[72%]"></div>
@@ -319,7 +379,10 @@ const RecruitmentDemandPage = () => {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-6 py-3 bg-gray-50 text-gray-700 font-bold rounded-xl hover:bg-ptit-red hover:text-white transition-colors">
+                <button 
+                  onClick={() => navigate(`/industry/${roadmap.id}`)}
+                  className="w-full mt-6 py-3 bg-gray-50 text-gray-700 font-bold rounded-xl hover:bg-ptit-red hover:text-white transition-colors"
+                >
                   Chi tiết lộ trình
                 </button>
               </div>

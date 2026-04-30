@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Briefcase } from 'lucide-react';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  const [keyword, setKeyword] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [location, setLocation] = useState('');
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    if (industry) params.append('industry', industry);
+    if (location) params.append('location', location);
+    navigate(`/jobs?${params.toString()}`);
+  };
+
   return (
     <section className="relative bg-gradient-to-r from-ptit-red to-red-600 min-h-[500px] flex items-center justify-center -mt-20 pt-20">
       {/* Background pattern overlay could go here */}
@@ -22,13 +36,20 @@ const HeroSection = () => {
              <input 
                type="text" 
                placeholder="Tìm kiếm việc làm, công ty..." 
+               value={keyword}
+               onChange={(e) => setKeyword(e.target.value)}
                className="bg-transparent w-full outline-none text-gray-700 placeholder-gray-400"
+               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
              />
           </div>
 
           <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-lg border-l border-white md:border-l-0 md:border-r border-gray-100 focus-within:ring-2 focus-within:ring-red-100 transition-shadow">
              <Briefcase className="text-gray-400 mr-3 shrink-0" />
-             <select className="bg-transparent w-full outline-none text-gray-700 cursor-pointer">
+             <select 
+               className="bg-transparent w-full outline-none text-gray-700 cursor-pointer"
+               value={industry}
+               onChange={(e) => setIndustry(e.target.value)}
+             >
                <option value="">Tất cả ngành nghề</option>
                <option>Công nghệ thông tin</option>
                <option>Viễn thông</option>
@@ -39,7 +60,11 @@ const HeroSection = () => {
 
           <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-lg focus-within:ring-2 focus-within:ring-red-100 transition-shadow">
              <MapPin className="text-gray-400 mr-3 shrink-0" />
-             <select className="bg-transparent w-full outline-none text-gray-700 cursor-pointer">
+             <select 
+               className="bg-transparent w-full outline-none text-gray-700 cursor-pointer"
+               value={location}
+               onChange={(e) => setLocation(e.target.value)}
+             >
                <option value="">Tất cả địa điểm</option>
                <option>Hà Nội</option>
                <option>TP. Hồ Chí Minh</option>
@@ -48,7 +73,10 @@ const HeroSection = () => {
              </select>
           </div>
 
-          <button className="bg-ptit-red text-white font-bold py-3 px-8 rounded-lg hover:bg-ptit-darkred transition-all shadow-lg shadow-red-200 whitespace-nowrap active:scale-95">
+          <button 
+            onClick={handleSearch}
+            className="bg-ptit-red text-white font-bold py-3 px-8 rounded-lg hover:bg-ptit-darkred transition-all shadow-lg shadow-red-200 whitespace-nowrap active:scale-95"
+          >
             Tìm kiếm
           </button>
         </div>

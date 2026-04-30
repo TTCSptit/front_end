@@ -154,3 +154,28 @@
     100% { left: 140%; }
   }
 }
+
+/* NUCLEAR FIX FOR OKLCH - ENSURE PDF COMPATIBILITY */
+#cv-print-area, #cv-print-area * {
+  /* Disable oklch by forcing common Tailwind variables to safe hex values */
+  --tw-border-opacity: 1 !important;
+  --tw-text-opacity: 1 !important;
+  --tw-bg-opacity: 1 !important;
+  
+  /* Hard reset for variables often carrying oklch */
+  --tw-shadow: 0 0 #0000 !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  
+  /* Ensure borders and backgrounds use standard parsing if classes are used */
+  border-color: #e5e7eb; 
+  outline-color: transparent;
+}
+
+/* Force standard colors for common text classes in case they are used */
+#cv-print-area .text-gray-900 { color: #111827 !important; }
+#cv-print-area .text-gray-800 { color: #1f2937 !important; }
+#cv-print-area .text-gray-600 { color: #4b5563 !important; }
+#cv-print-area .text-gray-500 { color: #6b7280 !important; }
+#cv-print-area .bg-white { background-color: #ffffff !important; }
+#cv-print-area .bg-gray-50 { background-color: #f9fafb !important; }

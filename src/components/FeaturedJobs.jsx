@@ -1,6 +1,7 @@
 import React from 'react';
 import JobCard from './JobCard';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getFeaturedJobs } from '../services/api';
 
 const FeaturedJobs = ({ onChatOpen }) => {
@@ -31,10 +32,10 @@ const FeaturedJobs = ({ onChatOpen }) => {
              <h2 className="text-3xl font-bold text-gray-900 mb-2">Việc làm nổi bật</h2>
              <div className="h-1 w-20 bg-ptit-red rounded"></div>
           </div>
-          <a href="#" className="hidden md:flex items-center text-ptit-red font-medium hover:text-ptit-darkred transition-colors gap-1 group">
+          <Link to="/jobs" className="hidden md:flex items-center text-ptit-red font-medium hover:text-ptit-darkred transition-colors gap-1 group">
              Xem tất cả việc làm
              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </a>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -46,10 +47,10 @@ const FeaturedJobs = ({ onChatOpen }) => {
         </div>
 
         <div className="mt-10 text-center md:hidden">
-           <a href="#" className="inline-flex items-center text-ptit-red font-medium hover:text-ptit-darkred transition-colors gap-1">
+           <Link to="/jobs" className="inline-flex items-center text-ptit-red font-medium hover:text-ptit-darkred transition-colors gap-1">
              Xem tất cả việc làm
              <ArrowRight size={18} />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

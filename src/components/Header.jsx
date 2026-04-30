@@ -80,6 +80,9 @@ const Header = () => {
                 {isLoggedIn && userRole === 'candidate' && (
                   <Link to="/profile" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Trang cá nhân</Link>
                 )}
+                {isLoggedIn && userRole === 'candidate' && (
+                  <Link to="/manage-cv" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Quản lý CV</Link>
+                )}
                 <Link to="/applied-jobs" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Việc làm đã nộp</Link>
                 <Link to="/industries" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Ngành nghề</Link>
                 <Link to="/cv-templates" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">CV Templates</Link>
@@ -185,6 +188,9 @@ const Header = () => {
                 <Link to="/home" className="font-medium text-ptit-red bg-red-50 p-2 rounded-lg" onClick={() => setIsMenuOpen(false)}>Trang chủ</Link>
                 {isLoggedIn && userRole === 'candidate' && (
                   <Link to="/profile" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Trang cá nhân</Link>
+                )}
+                {isLoggedIn && userRole === 'candidate' && (
+                  <Link to="/manage-cv" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Quản lý CV</Link>
                 )}
                 <Link to="/applied-jobs" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Việc làm đã nộp</Link>
                 <Link to="/industries" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Ngành nghề</Link>

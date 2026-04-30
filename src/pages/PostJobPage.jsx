@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Clock, 
   FileText, Plus, X, Upload, CheckCircle,
   Zap, AlertCircle, Sparkles, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { postJob } from '../services/api';
+import { postJob, getMyCompany, getCategories } from '../services/api';
 
 const PostJobPage = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]); // Danh sách ngành nghề từ API
+  const [fetchingConfig, setFetchingConfig] = useState(true);
   
 
   const [formData, setFormData] = useState({
@@ -25,9 +28,49 @@ const PostJobPage = () => {
     description: '',
     requirements: '',
     benefits: '',
-    expiryDate: '',
-    isFeatured: false
+    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isFeatured: false,
+    level: 'Junior', // Thêm trường level
+    companyId: null
   });
+
+  useEffect(() => {
+    const initPage = async () => {
+      try {
+        // 1. Lấy thông tin công ty
+        const company = await getMyCompany();
+        if (company) {
+          setFormData(prev => ({ ...prev, companyId: company.id }));
+        }
+
+        // 2. Lấy danh sách ngành nghề
+        const cats = await getCategories();
+        const catsArray = Array.isArray(cats) ? cats : [];
+        console.log(">>> DANH SÁCH NGÀNH NGHỀ TRONG DB:", catsArray);
+        setCategories(catsArray);
+
+        if (catsArray.length === 0) {
+          console.error("CẢNH BÁO: Bảng Categories trong Database của bạn đang TRỐNG. Vui lòng thêm dữ liệu vào bảng Categories trước.");
+        }
+
+        // 3. Tự động điền ngành nghề nếu khớp với công ty
+        if (company && company.industry && catsArray.length > 0) {
+          const matchedCat = catsArray.find(c => 
+            c.name.toLowerCase().includes(company.industry.toLowerCase()) ||
+            company.industry.toLowerCase().includes(c.name.toLowerCase())
+          );
+          if (matchedCat) {
+            setFormData(prev => ({ ...prev, industry: matchedCat.name }));
+          }
+        }
+      } catch (err) {
+        console.warn('Initialization error:', err);
+      } finally {
+        setFetchingConfig(false);
+      }
+    };
+    initPage();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -50,21 +93,79 @@ const PostJobPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.companyId) {
+      setSubmitError('Bạn cần cập nhật Hồ sơ công ty trước khi đăng tin tuyển dụng.');
+      return;
+    }
+
     setSubmitError('');
     setLoading(true);
+
+    // 1. Kiểm tra danh sách ngành nghề
+    console.log(">>> [DEBUG SUBMIT] Categories hiện tại:", categories);
+    
+    let currentCats = Array.isArray(categories) ? categories : [];
+    if (currentCats.length === 0) {
+      const fetchedCats = await getCategories();
+      currentCats = Array.isArray(fetchedCats) ? fetchedCats : [];
+      setCategories(currentCats);
+    }
+
+    const typedIndustry = (formData.industry || '').trim().toLowerCase();
+    const selectedCat = currentCats.find(c => {
+      const name = (c.name || c.Name || '').trim().toLowerCase();
+      return name === typedIndustry;
+    });
+    
+    // Lấy ID (thử mọi trường hợp id, Id, ID)
+    let categoryId = selectedCat?.id || selectedCat?.Id || selectedCat?.ID;
+    
+    // Nếu không khớp tên nhưng có danh sách, lấy ID của phần tử đầu tiên
+    if (!categoryId && currentCats.length > 0) {
+      categoryId = currentCats[0].id || currentCats[0].Id || currentCats[0].ID;
+    }
+
+    console.log(">>> [DEBUG SUBMIT] Kết quả khớp:", { 
+      typed: typedIndustry, 
+      found: selectedCat, 
+      finalId: categoryId 
+    });
+
+    if (!categoryId) {
+      // Trường hợp cuối cùng: Thử gửi đại ID 1 nếu danh sách trống (để test)
+      categoryId = 1; 
+      console.warn(">>> [WARNING] Không tìm thấy ID, fallback về 1");
+    }
+
+    // 2. Tách lương "20 - 30 triệu" thành SalaryMin và SalaryMax
+    const salaryNumbers = formData.salary.match(/\d+/g);
+    const salaryMin = salaryNumbers ? parseInt(salaryNumbers[0]) : 0;
+    const salaryMax = salaryNumbers && salaryNumbers[1] ? parseInt(salaryNumbers[1]) : salaryMin;
+
+    // 3. Map JobType sang số (Giả định: Full-time = 0, Part-time = 1...)
+    const jobTypeMap = { 'Full-time': 0, 'Part-time': 1, 'Internship': 2, 'Freelance': 3 };
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      isNegotiable: formData.salary.toLowerCase().includes('thỏa thuận'),
+      jobType: jobTypeMap[formData.type] || 0,
+      status: 1,
+      categoryId: categoryId,
+      companyId: formData.companyId,
+      viewsCount: 0,
+      createdAt: new Date().toISOString(),
+      expiredAt: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : null
+    };
+
+    console.log("%c>>> DỮ LIỆU SIÊU CHUẨN GỬI ĐI:", "color: lime; font-weight: bold", payload);
+
     try {
-      await postJob({
-        title: formData.title,
-        location: formData.location,
-        salary: formData.salary,
-        type: formData.type,
-        experience: formData.experience,
-        description: formData.description,
-        requirements: formData.requirements,
-        benefits: formData.benefits,
-        expiryDate: formData.expiryDate || null,
-        isFeatured: formData.isFeatured,
-      });
+      await postJob(payload);
       setIsSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
@@ -195,17 +296,50 @@ const PostJobPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Kinh nghiệm yêu cầu</label>
-                <select 
-                  name="experience"
+                <label className="block text-sm font-bold text-gray-700 mb-2">Ngành nghề *</label>
+                <input 
+                  list="industry-options"
+                  name="industry"
+                  required
+                  placeholder="Gõ để tìm ngành nghề (VD: Công nghệ thông tin...)"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition bg-white"
-                  value={formData.experience}
+                  value={formData.industry}
+                  onChange={handleChange}
+                />
+                <datalist id="industry-options">
+                  {categories.map((cat, index) => (
+                    <option key={cat.id || index} value={cat.name} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Hạn nộp hồ sơ *</label>
+                <input 
+                  type="date" 
+                  name="expiryDate"
+                  required
+                  min={new Date().toISOString().split('T')[0]} // Không cho chọn ngày quá khứ
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition bg-white"
+                  value={formData.expiryDate}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Cấp bậc</label>
+                <select 
+                  name="level"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition bg-white"
+                  value={formData.level}
                   onChange={handleChange}
                 >
+                  <option>Intern</option>
                   <option>Fresher</option>
-                  <option>1 - 2 năm</option>
-                  <option>3 - 5 năm</option>
-                  <option>Trên 5 năm</option>
+                  <option>Junior</option>
+                  <option>Middle</option>
+                  <option>Senior</option>
+                  <option>Lead/Manager</option>
                 </select>
               </div>
             </div>

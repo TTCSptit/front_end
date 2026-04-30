@@ -63,10 +63,10 @@ const IndustriesPage = () => {
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredIndustries.map((item) => (
+          {filteredIndustries.map((item, index) => (
             <Link 
               to={`/industry/${item.id}`} 
-              key={item.id}
+              key={item.id || index}
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 border border-gray-100 group cursor-pointer"
             >
               <div className={`w-14 h-14 rounded-xl bg-red-50 text-ptit-red flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -76,7 +76,7 @@ const IndustriesPage = () => {
                 {item.name}
               </h3>
               <p className="text-gray-500 text-sm font-medium">
-                {item.jobCount?.toLocaleString() || 0} việc làm
+                {item.totalJobs?.toLocaleString() || 0} việc làm
               </p>
             </Link>
           ))}

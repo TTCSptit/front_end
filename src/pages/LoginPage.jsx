@@ -25,6 +25,8 @@ const LoginPage = () => {
       sessionStorage.setItem('isLoggedIn', 'true');
       sessionStorage.setItem('userRole', role);
       sessionStorage.setItem('userEmail', result.user?.email ?? email);
+      if (result.user?.id) sessionStorage.setItem('userId', result.user.id);
+      if (result.user?.fullName) sessionStorage.setItem('userFullName', result.user.fullName);
 
       if (role === 'recruiter') {
         navigate('/recruiter/dashboard');

@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, Building2, MapPin, Globe, Phone, Mail, 
   Camera, Save, Users, Calendar, Briefcase, Edit3
@@ -10,7 +12,7 @@ const CompanyProfilePage = () => {
   const [error, setError] = useState('');
   const [companyData, setCompanyData] = useState({
     id: null,
-    name: '',
+    name: 'Công ty của bạn',
     industry: 'Công nghệ thông tin',
     size: '100-500 nhân viên',
     founded: '2015',
@@ -23,24 +25,31 @@ const CompanyProfilePage = () => {
     benefits: []
   });
 
+  const stats = [
+    { label: 'Tin tuyển dụng', value: '12', icon: Briefcase },
+    { label: 'Ứng viên', value: '156', icon: Users },
+  ];
+
   useEffect(() => {
     const fetchCompany = async () => {
       try {
         const data = await getMyCompany();
-        setCompanyData({
-          id: data.id,
-          name: data.name || '',
-          industry: data.industry || 'Công nghệ thông tin',
-          size: data.size || '100-500 nhân viên',
-          founded: data.founded || '2015',
-          website: data.websiteUrl || '',
-          email: data.email || '',
-          phone: data.phoneNumber || '',
-          address: data.location || '',
-          description: data.description || '',
-          logoUrl: data.logoUrl || '',
-          benefits: data.benefits || []
-        });
+        if (data) {
+          setCompanyData({
+            id: data.id,
+            name: data.name || '',
+            industry: data.industry || 'Công nghệ thông tin',
+            size: data.size || '100-500 nhân viên',
+            founded: data.founded || '2015',
+            website: data.websiteUrl || '',
+            email: data.email || '',
+            phone: data.phoneNumber || '',
+            address: data.location || '',
+            description: data.description || '',
+            logoUrl: data.logoUrl || '',
+            benefits: data.benefits || []
+          });
+        }
       } catch (err) {
         setError(err.message || 'Không thể tải thông tin công ty.');
       } finally {
@@ -51,6 +60,7 @@ const CompanyProfilePage = () => {
   }, []);
 
   const handleSave = async () => {
+    if (!companyData.id) return;
     try {
       await updateCompany(companyData.id, {
         name: companyData.name,
@@ -68,6 +78,8 @@ const CompanyProfilePage = () => {
     }
   };
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
@@ -109,7 +121,7 @@ const CompanyProfilePage = () => {
                     {companyData.logoUrl ? (
                       <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      companyData.name.charAt(0)
+                      (companyData.name || 'U').charAt(0)
                     )}
                   </div>
                   {isEditing && (
@@ -165,7 +177,7 @@ const CompanyProfilePage = () => {
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Phúc lợi nhân viên</h3>
               <div className="grid sm:grid-cols-2 gap-3">
-                {companyData.benefits.map((benefit, index) => (
+                {Array.isArray(companyData.benefits) && companyData.benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600">
                       ✓
@@ -241,7 +253,7 @@ const CompanyProfilePage = () => {
                       className="flex-1 text-sm border-b border-gray-200 pb-1 outline-none focus:border-ptit-red"
                     />
                   ) : (
-                    <a href={companyData.website} className="text-ptit-red text-sm hover:underline">{companyData.website}</a>
+                    <a href={companyData.website} className="text-ptit-red text-sm hover:underline" target="_blank" rel="noopener noreferrer">{companyData.website}</a>
                   )}
                 </div>
                 <div className="flex items-center gap-3">

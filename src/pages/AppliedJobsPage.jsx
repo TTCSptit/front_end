@@ -117,8 +117,8 @@ const AppliedJobsPage = () => {
               {/* Company Logo */}
               <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'mb-6' : ''}`}>
                 <img 
-                  src={item.logo} 
-                  alt={item.company} 
+                  src={item.jobCardDto.companyLogoUrl || 'https://via.placeholder.com/150'} 
+                  alt={item.jobCardDto.companyName} 
                   className="w-16 h-16 rounded-2xl object-contain border border-gray-50 p-1 group-hover:scale-110 transition-transform" 
                 />
               </div>
@@ -128,19 +128,22 @@ const AppliedJobsPage = () => {
                 <div className="flex flex-col h-full justify-between">
                   <div>
                     <h3 className="font-black text-xl text-gray-900 group-hover:text-ptit-red transition-colors mb-1 tracking-tight">
-                        {item.title}
+                        {item.jobCardDto.title}
                     </h3>
-                    <p className="font-bold text-gray-500 mb-4">{item.company}</p>
+                    <p className="font-bold text-gray-500 mb-4">{item.jobCardDto.companyName}</p>
                     
                     <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-6">
                         <span className="flex items-center gap-1.5 font-bold">
-                            <MapPin size={16} className="text-gray-400" /> {item.location}
+                            <MapPin size={16} className="text-gray-400" /> {item.jobCardDto.location}
                         </span>
                         <span className="flex items-center gap-1.5 font-bold text-green-600">
-                            <DollarSign size={16} /> {item.salary}
+                            <DollarSign size={16} /> 
+                            {item.jobCardDto.salaryMin && item.jobCardDto.salaryMax 
+                                ? `${item.jobCardDto.salaryMin} - ${item.jobCardDto.salaryMax} triệu` 
+                                : item.jobCardDto.isNegotiable ? 'Thỏa thuận' : 'Lương hấp dẫn'}
                         </span>
                         <span className="flex items-center gap-1.5 font-bold">
-                            <Clock size={16} className="text-gray-400" /> Nộp ngày: {item.appliedDate}
+                            <Clock size={16} className="text-gray-400" /> Nộp ngày: {new Date(item.appliedAt).toLocaleDateString('vi-VN')}
                         </span>
                     </div>
                   </div>
@@ -163,7 +166,7 @@ const AppliedJobsPage = () => {
                         <MessageSquare size={20} />
                     </button>
                     <Link 
-                      to={`/job/${item.id}`} 
+                      to={`/job/${item.jobCardDto.id}`} 
                       className="w-10 h-10 bg-gray-950 text-white rounded-xl flex items-center justify-center hover:bg-ptit-red transition-all shadow-lg hover:shadow-red-500/20 active:scale-90"
                     >
                         <ArrowRight size={20} />
@@ -175,7 +178,7 @@ const AppliedJobsPage = () => {
         </div>
 
         {/* Empty State Mockup */}
-        {appliedJobs.length === 0 && (
+        {!loading && appliedJobs.length === 0 && (
             <div className="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-20 text-center">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
                     <Briefcase size={40} />

@@ -5,7 +5,7 @@ import {
   ChevronRight, ChevronLeft, CheckCircle, Info, Plus, X,
   Edit3, Save
 } from 'lucide-react';
-import { getJob, updateJob } from '../services/api';
+import { getJob, updateJob, getCategories } from '../services/api';
 
 const EditJobPage = () => {
   const { jobId } = useParams();
@@ -27,26 +27,40 @@ const EditJobPage = () => {
     deadline: '',
     description: '',
     requirements: '',
-    benefits: ''
+    benefits: '',
+    categoryId: ''
   });
 
+  const [categories, setCategories] = useState([]);
+
   useEffect(() => {
-    const fetchJobData = async () => {
+    const initPage = async () => {
       try {
+        // 1. Fetch Categories
+        const cats = await getCategories();
+        setCategories(Array.isArray(cats) ? cats : []);
+
+        // 2. Fetch Job Data
         const job = await getJob(jobId);
         if (job) {
+          // Format salary from Min/Max to string for UI
+          const salaryStr = job.salaryMin && job.salaryMax 
+            ? `${job.salaryMin} - ${job.salaryMax} triệu`
+            : job.isNegotiable ? 'Thỏa thuận' : '';
+
           setFormData({
             title: job.title || '',
             company: job.companyName || '',
             location: job.location || '',
-            salary: job.salary || '',
-            type: job.type || 'Full-time',
-            level: job.level || 'Senior',
-            experience: job.experience || '',
-            deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+            salary: salaryStr,
+            type: job.jobType === 0 ? 'Full-time' : job.jobType === 1 ? 'Part-time' : job.jobType === 2 ? 'Internship' : 'Remote',
+            level: 'Senior', // Mock
+            experience: '', // Mock
+            deadline: job.expiredAt ? new Date(job.expiredAt).toISOString().slice(0, 16) : '',
             description: job.description || '',
-            requirements: job.requirements || '',
-            benefits: job.benefits || ''
+            requirements: '', // Backend doesn't have this field yet
+            benefits: '', // Backend doesn't have this field yet
+            categoryId: job.categoryId || ''
           });
         }
       } catch (err) {
@@ -55,17 +69,41 @@ const EditJobPage = () => {
         setLoading(false);
       }
     };
-    fetchJobData();
+    initPage();
   }, [jobId]);
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmitManual = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn lưu các thay đổi này?')) {
+      return;
+    }
+
     setIsSubmitting(true);
+    
+    // Parse salary
+    const salaryNumbers = (formData.salary || '').match(/\d+/g);
+    const salaryMin = salaryNumbers ? parseInt(salaryNumbers[0]) : 0;
+    const salaryMax = salaryNumbers && salaryNumbers[1] ? parseInt(salaryNumbers[1]) : salaryMin;
+
+    // Map JobType
+    const jobTypeMap = { 'Full-time': 0, 'Part-time': 1, 'Internship': 2, 'Remote': 3 };
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      isNegotiable: (formData.salary || '').toLowerCase().includes('thỏa thuận'),
+      jobType: jobTypeMap[formData.type] || 0,
+      categoryId: parseInt(formData.categoryId) || 1,
+      expiredAt: formData.deadline ? new Date(formData.deadline).toISOString() : null
+    };
+
     try {
-      await updateJob(jobId, formData);
+      await updateJob(jobId, payload);
       setIsSuccess(true);
     } catch (err) {
       setError(err.message || 'Cập nhật tin thất bại.');
@@ -93,6 +131,14 @@ const EditJobPage = () => {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24 flex items-center justify-center">
+        <div className="text-gray-500 animate-pulse font-medium">Đang tải thông tin...</div>
       </div>
     );
   }
@@ -129,8 +175,15 @@ const EditJobPage = () => {
           ))}
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+            <Info size={18} />
+            {error}
+          </div>
+        )}
+
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Step 1: Basic Info */}
           {step === 1 && (
             <div className="p-8 space-y-6">
@@ -170,11 +223,25 @@ const EditJobPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Ngành nghề</label>
+                  <select 
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition bg-white"
+                    required
+                  >
+                    <option value="">Chọn ngành nghề</option>
+                    {categories.map((cat, index) => (
+                      <option key={cat.id || index} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Loại công việc</label>
                   <select 
                     value={formData.type}
                     onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition bg-white"
                   >
                     <option>Full-time</option>
                     <option>Part-time</option>
@@ -198,16 +265,7 @@ const EditJobPage = () => {
                 <textarea 
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition h-32 resize-none"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Yêu cầu ứng viên</label>
-                <textarea 
-                  value={formData.requirements}
-                  onChange={(e) => setFormData({...formData, requirements: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition h-32 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition h-48 resize-none"
                   required
                 />
               </div>
@@ -223,14 +281,15 @@ const EditJobPage = () => {
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">Hạn chót nộp hồ sơ</label>
+                  <label className="text-sm font-semibold text-gray-700">Hạn chót nộp hồ sơ (Ngày & Giờ)</label>
                   <input 
-                    type="date"
+                    type="datetime-local"
                     value={formData.deadline}
                     onChange={(e) => setFormData({...formData, deadline: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition"
                     required
                   />
+                  <p className="text-xs text-gray-400 mt-1">Gợi ý: Nên đặt vào cuối ngày (ví dụ: 23:59) để ứng viên có thêm thời gian.</p>
                 </div>
               </div>
               <div className="bg-red-50 p-4 rounded-xl text-ptit-red text-sm flex gap-3">
@@ -265,7 +324,8 @@ const EditJobPage = () => {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmitManual}
                 disabled={isSubmitting}
                 className={`flex items-center gap-2 px-8 py-3 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200 ${
                   isSubmitting ? 'opacity-70 cursor-not-allowed' : ''

@@ -9,7 +9,12 @@ const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100 flex flex-col h-full group">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center p-2 shrink-0 border border-gray-100 group-hover:border-red-100 transition-colors">
-          <img src={job.logoUrl || job.logo || 'https://via.placeholder.com/150'} alt={job.companyName || job.company} className="max-w-full max-h-full object-contain" />
+          <img
+            src={job.companyLogoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f3f4f6'/%3E%3Crect x='18' y='28' width='28' height='20' rx='2' fill='%23d1d5db'/%3E%3Crect x='24' y='20' width='16' height='10' rx='2' fill='%239ca3af'/%3E%3Crect x='26' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3Crect x='33' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3C/svg%3E"}
+            alt={job.companyName}
+            className="max-w-full max-h-full object-contain"
+            onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f3f4f6'/%3E%3Crect x='18' y='28' width='28' height='20' rx='2' fill='%23d1d5db'/%3E%3Crect x='24' y='20' width='16' height='10' rx='2' fill='%239ca3af'/%3E%3Crect x='26' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3Crect x='33' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3C/svg%3E"; }}
+          />
         </div>
         <div>
           <h3 className="font-bold text-gray-900 group-hover:text-ptit-red transition-colors line-clamp-2 mb-1">
@@ -17,7 +22,7 @@ const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
           </h3>
           <p className="text-gray-500 text-sm font-medium flex items-center gap-1">
             <Building2 size={14} />
-            {job.companyName || job.company}
+            {job.companyName}
           </p>
         </div>
       </div>

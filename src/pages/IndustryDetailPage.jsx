@@ -16,11 +16,13 @@ const IndustryDetailPage = () => {
     const fetchData = async () => {
       try {
         const cats = await getCategories();
-        const currentCat = cats.find(c => c.id.toString() === id);
+        const currentCat = cats.find(c => c.id && id && c.id.toString() === id.toString());
         if (currentCat) {
           setIndustryName(currentCat.name);
-          const jobData = await getJobs({ categorySlug: currentCat.slug });
-          setJobs(jobData.items || []);
+          const jobData = await getJobs({ categoryName: currentCat.name });
+          setJobs(jobData.items || jobData || []);
+        } else {
+          setError('Không tìm thấy ngành nghề yêu cầu.');
         }
       } catch (err) {
         setError(err.message || 'Không thể tải danh sách việc làm.');
@@ -110,10 +112,10 @@ const IndustryDetailPage = () => {
                 {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">{error}</div>}
                 
                 <div className="grid grid-cols-1 gap-4">
-                    {!loading && jobs.map((job) => (
+                    {!loading && jobs.map((job, index) => (
                         // Passing linkType='job' so that clicking Apply goes to JobDetail, 
                         // NOT CompanyDetail (since we are already drilling down to jobs)
-                        <div key={job.id} className="h-full">
+                        <div key={job.id || index} className="h-full">
                              <JobCard job={job} linkType="job" /> 
                         </div>
                     ))}

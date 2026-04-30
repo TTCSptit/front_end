@@ -5,7 +5,7 @@ import {
   Star, Clock, MapPin, Briefcase, Filter, Search,
   CheckCircle, XCircle, MessageSquare, Users
 } from 'lucide-react';
-import { getApplicants, updateApplicationStatus } from '../services/api';
+import { getApplicants, updateApplicationStatus, getApplicantCvUrl, downloadProtectedFile, sendMessage } from '../services/api';
 
 const statusConfig = {
   new: { label: 'Mới', color: 'bg-blue-100 text-blue-700' },
@@ -23,14 +23,21 @@ const JobApplicantsPage = () => {
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [showMsgModal, setShowMsgModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleData, setScheduleData] = useState({
+    date: '',
+    time: '',
+    format: 'Phỏng vấn Online (Google Meet/Zoom)',
+    notes: ''
+  });
 
   useEffect(() => {
     const fetchApplicants = async () => {
       try {
         const data = await getApplicants(jobId);
-        setApplicants(data || []);
+        setApplicants(data?.applicants || (Array.isArray(data) ? data : []));
       } catch (err) {
         setError(err.message || 'Không thể tải danh sách ứng viên.');
+        setApplicants([]);
       } finally {
         setLoading(false);
       }
@@ -49,7 +56,7 @@ const JobApplicantsPage = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'bg-blue-100 text-blue-700';
+      case 'Pending': return 'bg-yellow-100 text-yellow-700';
       case 'Accepted': return 'bg-green-100 text-green-700';
       case 'Rejected': return 'bg-red-100 text-red-600';
       default: return 'bg-gray-100 text-gray-600';
@@ -58,7 +65,7 @@ const JobApplicantsPage = () => {
 
   const handleStatusUpdate = async (applicationId, newStatus) => {
     try {
-      await updateApplicationStatus({ applicationId, status: newStatus });
+      await updateApplicationStatus({ applicationId, newStatus });
       // Update local state
       setApplicants(prev => prev.map(a => 
         a.id === applicationId ? { ...a, status: newStatus } : a
@@ -69,6 +76,27 @@ const JobApplicantsPage = () => {
       alert('Cập nhật trạng thái thành công!');
     } catch (err) {
       alert(err.message || 'Cập nhật trạng thái thất bại.');
+    }
+  };
+
+  const handleConfirmSchedule = async () => {
+    if (!selectedApplicant || !scheduleData.date || !scheduleData.time) {
+      alert('Vui lòng chọn đầy đủ ngày và giờ phỏng vấn.');
+      return;
+    }
+
+    const message = `🔔 THÔNG BÁO LỊCH PHỎNG VẤN\n\nChào bạn ${selectedApplicant.fullName},\n\nChúng tôi rất ấn tượng với hồ sơ của bạn và trân trọng mời bạn tham gia buổi phỏng vấn.\n\n📅 Thời gian: ${scheduleData.time}, ngày ${new Date(scheduleData.date).toLocaleDateString('vi-VN')}\n📍 Hình thức: ${scheduleData.format}\n📝 Ghi chú: ${scheduleData.notes || 'Không có'}\n\nVui lòng xác nhận sự có mặt của bạn bằng cách phản hồi tin nhắn này. Trân trọng!`;
+
+    try {
+      await sendMessage(selectedApplicant.userId, message);
+      alert('Đã gửi lịch phỏng vấn và tin nhắn thông báo thành công!');
+      setShowScheduleModal(false);
+      // Cập nhật trạng thái thành 'Accepted' (Quan tâm) luôn nếu cần
+      if (selectedApplicant.status === 'Pending') {
+        handleStatusUpdate(selectedApplicant.id, 'Accepted');
+      }
+    } catch (err) {
+      alert('Gửi tin nhắn thất bại: ' + err.message);
     }
   };
 
@@ -96,15 +124,15 @@ const JobApplicantsPage = () => {
             <div className="text-sm text-gray-500">Tổng ứng viên</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-blue-600">{applicants.filter(a => a.status === 'Pending').length}</div>
+            <div className="text-2xl font-bold text-yellow-600">{Array.isArray(applicants) ? applicants.filter(a => a.status === 'Pending').length : 0}</div>
             <div className="text-sm text-gray-500">Chưa xem</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-green-600">{applicants.filter(a => a.status === 'Accepted').length}</div>
+            <div className="text-2xl font-bold text-green-600">{Array.isArray(applicants) ? applicants.filter(a => a.status === 'Accepted').length : 0}</div>
             <div className="text-sm text-gray-500">Quan tâm</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-2xl font-bold text-red-600">{applicants.filter(a => a.status === 'Rejected').length}</div>
+            <div className="text-2xl font-bold text-red-600">{Array.isArray(applicants) ? applicants.filter(a => a.status === 'Rejected').length : 0}</div>
             <div className="text-sm text-gray-500">Từ chối</div>
           </div>
         </div>
@@ -133,9 +161,9 @@ const JobApplicantsPage = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* List */}
           <div className="lg:col-span-2 space-y-4">
-            {!loading && applicants.map((applicant) => (
+            {Array.isArray(applicants) && applicants.length > 0 ? applicants.map((applicant, index) => (
               <div 
-                key={applicant.id}
+                key={applicant.id || index}
                 onClick={() => setSelectedApplicant(applicant)}
                 className={`bg-white rounded-2xl p-6 shadow-sm border cursor-pointer transition-all ${
                   selectedApplicant?.id === applicant.id 
@@ -166,12 +194,16 @@ const JobApplicantsPage = () => {
                   <div className="text-right text-sm text-gray-400 shrink-0">
                     <div className="flex items-center gap-1 mt-1">
                       <Calendar size={14} />
-                      {new Date(applicant.appliedAt).toLocaleDateString()}
+                      {applicant.appliedAt ? new Date(applicant.appliedAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : !loading && (
+              <div className="bg-white rounded-2xl p-12 text-center text-gray-400 border border-dashed border-gray-200">
+                Chưa có ứng viên nào ứng tuyển.
+              </div>
+            )}
           </div>
 
           {/* Detail Panel */}
@@ -193,7 +225,10 @@ const JobApplicantsPage = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <button className="flex items-center justify-center gap-2 w-full py-4 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200">
+                  <button 
+                    onClick={() => downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`)}
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200"
+                  >
                     <Download size={20} />
                     Tải CV
                   </button>
@@ -223,7 +258,7 @@ const JobApplicantsPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-2">
                     <button 
-                      onClick={() => navigate(`/recruiter/messages?contact=${selectedApplicant.id}`)}
+                      onClick={() => navigate(`/recruiter/messages?contact=${selectedApplicant.userId}`)}
                       className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md"
                     >
                       <MessageSquare size={18} />
@@ -268,6 +303,8 @@ const JobApplicantsPage = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Ngày phỏng vấn</label>
                   <input 
                     type="date"
+                    value={scheduleData.date}
+                    onChange={(e) => setScheduleData({...scheduleData, date: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition"
                   />
                 </div>
@@ -275,13 +312,19 @@ const JobApplicantsPage = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Giờ phỏng vấn</label>
                   <input 
                     type="time"
+                    value={scheduleData.time}
+                    onChange={(e) => setScheduleData({...scheduleData, time: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Hình thức</label>
-                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition">
+                <select 
+                  value={scheduleData.format}
+                  onChange={(e) => setScheduleData({...scheduleData, format: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition"
+                >
                   <option>Phỏng vấn Online (Google Meet/Zoom)</option>
                   <option>Phỏng vấn trực tiếp tại văn phòng</option>
                   <option>Phỏng vấn qua điện thoại</option>
@@ -291,6 +334,8 @@ const JobApplicantsPage = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Ghi chú cho ứng viên</label>
                 <textarea 
                   rows={3}
+                  value={scheduleData.notes}
+                  onChange={(e) => setScheduleData({...scheduleData, notes: e.target.value})}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red outline-none transition resize-none"
                   placeholder="Yêu cầu chuẩn bị laptop, CV cứng..."
                 ></textarea>
@@ -304,10 +349,7 @@ const JobApplicantsPage = () => {
                 Hủy
               </button>
               <button 
-                onClick={() => {
-                  alert('Đã gửi lịch phỏng vấn thành công!');
-                  setShowScheduleModal(false);
-                }}
+                onClick={handleConfirmSchedule}
                 className="flex-1 py-3 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-100"
               >
                 Xác nhận lịch

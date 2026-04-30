@@ -14,6 +14,7 @@ const JobDetailPage = () => {
 
     useEffect(() => {
         const fetchJob = async () => {
+            if (!id || id === 'undefined') { setLoading(false); return; }
             try {
                 const data = await getJob(id);
                 setJob(data);
@@ -49,7 +50,7 @@ const JobDetailPage = () => {
         <div className="bg-gray-50 min-h-screen py-8">
             <div className="container mx-auto px-4 max-w-5xl">
                 {/* Back Link */}
-                <Link to="/company/1" className="inline-flex items-center text-gray-500 hover:text-ptit-red mb-6 transition-colors">
+                <Link to="/home" className="inline-flex items-center text-gray-500 hover:text-ptit-red mb-6 transition-colors">
                     <ChevronLeft size={20} />
                     Quay lại trang công ty
                 </Link>
@@ -64,7 +65,9 @@ const JobDetailPage = () => {
                             <div className="flex flex-wrap gap-4 text-gray-600 mb-6">
                                 <span className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium">
                                     <DollarSign size={18} className="text-green-600" />
-                                    {job.salary}
+                                    {job.salaryMin && job.salaryMax 
+                                        ? `${job.salaryMin} - ${job.salaryMax} triệu` 
+                                        : job.isNegotiable ? 'Thỏa thuận' : 'Lương hấp dẫn'}
                                 </span>
                                 <span className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium">
                                     <MapPin size={18} className="text-blue-500" />
@@ -72,7 +75,7 @@ const JobDetailPage = () => {
                                 </span>
                                 <span className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium">
                                     <Clock size={18} className="text-orange-500" />
-                                    Hạn nộp: {job.deadline}
+                                    Hạn nộp: {job.expiredAt ? new Date(job.expiredAt).toLocaleDateString('vi-VN') : 'Đang cập nhật'}
                                 </span>
                             </div>
 
@@ -89,7 +92,7 @@ const JobDetailPage = () => {
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                             <h2 className="text-xl font-bold text-gray-900 mb-4 border-l-4 border-ptit-red pl-3">Mô tả công việc</h2>
                             <div className="prose text-gray-600 max-w-none whitespace-pre-line">
-                                {job.description}
+                                {job.description || 'Chưa có mô tả chi tiết.'}
                             </div>
                         </div>
 
@@ -97,12 +100,12 @@ const JobDetailPage = () => {
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                             <h2 className="text-xl font-bold text-gray-900 mb-4 border-l-4 border-ptit-red pl-3">Yêu cầu ứng viên</h2>
                             <ul className="space-y-3">
-                                {job.requirements.map((req, index) => (
+                                {(job.requirements || []).length > 0 ? (job.requirements || []).map((req, index) => (
                                     <li key={index} className="flex items-start gap-3">
                                         <CheckCircle className="text-ptit-red flex-shrink-0 mt-1" size={18} />
                                         <span className="text-gray-700">{req}</span>
                                     </li>
-                                ))}
+                                )) : <p className="text-gray-500">Xem chi tiết trong phần mô tả.</p>}
                             </ul>
                         </div>
 
@@ -110,12 +113,12 @@ const JobDetailPage = () => {
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                             <h2 className="text-xl font-bold text-gray-900 mb-4 border-l-4 border-ptit-red pl-3">Quyền lợi</h2>
                             <ul className="space-y-3">
-                                {job.benefits.map((benefit, index) => (
+                                {(job.benefits || []).length > 0 ? (job.benefits || []).map((benefit, index) => (
                                     <li key={index} className="flex items-start gap-3">
                                         <CheckCircle className="text-green-600 flex-shrink-0 mt-1" size={18} />
                                         <span className="text-gray-700">{benefit}</span>
                                     </li>
-                                ))}
+                                )) : <p className="text-gray-500">Trao đổi trực tiếp khi phỏng vấn.</p>}
                             </ul>
                         </div>
                     </div>
@@ -125,10 +128,10 @@ const JobDetailPage = () => {
                         {/* Company Summary */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                             <div className="flex items-center gap-4 mb-4">
-                                <img src={job.logo} alt={job.company} className="w-16 h-16 rounded-lg object-contain border border-gray-200 p-1" />
+                                <img src={job.companyLogoUrl} alt={job.companyName} className="w-16 h-16 rounded-lg object-contain border border-gray-200 p-1" />
                                 <div>
-                                    <h3 className="font-bold text-gray-900 leading-tight mb-1">{job.company}</h3>
-                                    <Link to="/company/1" className="text-sm text-ptit-red hover:underline">Xem trang công ty</Link>
+                                    <h3 className="font-bold text-gray-900 leading-tight mb-1">{job.companyName}</h3>
+                                    <Link to={`/company/${job.companyId}`} className="text-sm text-ptit-red hover:underline">Xem trang công ty</Link>
                                 </div>
                             </div>
 
@@ -199,7 +202,7 @@ const JobDetailPage = () => {
                             
                             <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Nộp hồ sơ thành công!</h2>
                             <p className="text-gray-500 font-medium mb-10 leading-relaxed">
-                                Chúc mừng! Hồ sơ của bạn đã được gửi đến <span className="text-gray-900 font-bold">{job.company}</span>. 
+                                Chúc mừng! Hồ sơ của bạn đã được gửi đến <span className="text-gray-900 font-bold">{job.companyName}</span>. 
                                 Bạn có thể theo dõi tiến độ ứng tuyển ngay bây giờ.
                             </p>
                             

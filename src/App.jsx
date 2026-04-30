@@ -23,7 +23,11 @@ import CandidateProfilePage from './pages/CandidateProfilePage';
 import RecruitmentDemandPage from './pages/RecruitmentDemandPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import MessagingPage from './pages/MessagingPage';
+import ManageCVPage from './pages/ManageCVPage';
+import CVEditorPage from './pages/CVEditorPage';
+import AllJobsPage from './pages/AllJobsPage';
 import ChatBot from './components/ChatBot';
+import { ChatProvider } from './context/ChatContext';
 
 function App() {
   const [isChatOpen, setIsChatOpen] = React.useState(false);
@@ -34,39 +38,43 @@ function App() {
 
   const openChatWithJob = (jobTitle) => {
     setIsChatOpen(true);
-    // In a real app, we would pass the job context to the chatbot here
   };
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/home" element={<HomePage onChatOpen={openChatWithJob} />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/company/:id" element={<CompanyDetailPage />} />
-        <Route path="/industries" element={<IndustriesPage />} />
-        <Route path="/industry/:id" element={<IndustryDetailPage />} />
-        <Route path="/job/:id" element={<JobDetailPage />} />
-        <Route path="/cv-templates" element={<CVTemplatesPage />} />
-        <Route path="/news" element={<NewsPage />} />
-        <Route path="/recruiter" element={<RecruiterPage />} />
-        <Route path="/recruiter/post-job" element={<PostJobPage />} />
-        <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
-        <Route path="/recruiter/jobs/:jobId/applicants" element={<JobApplicantsPage />} />
-        <Route path="/recruiter/company-profile" element={<CompanyProfilePage />} />
-        <Route path="/recruiter/stats" element={<RecruiterStatsPage />} />
-        <Route path="/recruiter/edit-job/:jobId" element={<EditJobPage />} />
-        <Route path="/recruiter/saved-candidates" element={<SavedCandidatesPage />} />
-        <Route path="/messages" element={<MessagingPage role="candidate" />} />
-        <Route path="/recruiter/messages" element={<MessagingPage role="recruiter" />} />
-        <Route path="/applied-jobs" element={<AppliedJobsPage />} />
-        <Route path="/profile" element={<CandidateProfilePage />} />
-        <Route path="/market-demand" element={<RecruitmentDemandPage />} />
-      </Routes>
-      <ChatBot isOpen={isChatOpen} onToggle={toggleChat} />
-    </Layout>
+    <ChatProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/home" element={<HomePage onChatOpen={openChatWithJob} />} />
+          <Route path="/jobs" element={<AllJobsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/company/:id" element={<CompanyDetailPage />} />
+          <Route path="/industries" element={<IndustriesPage />} />
+          <Route path="/industry/:id" element={<IndustryDetailPage />} />
+          <Route path="/job/:id" element={<JobDetailPage />} />
+          <Route path="/cv-templates" element={<CVTemplatesPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/recruiter" element={<RecruiterPage />} />
+          <Route path="/recruiter/post-job" element={<PostJobPage />} />
+          <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
+          <Route path="/recruiter/jobs/:jobId/applicants" element={<JobApplicantsPage />} />
+          <Route path="/recruiter/company-profile" element={<CompanyProfilePage />} />
+          <Route path="/recruiter/stats" element={<RecruiterStatsPage />} />
+          <Route path="/recruiter/edit-job/:jobId" element={<EditJobPage />} />
+          <Route path="/recruiter/saved-candidates" element={<SavedCandidatesPage />} />
+          <Route path="/messages" element={<MessagingPage role="candidate" />} />
+          <Route path="/recruiter/messages" element={<MessagingPage role="recruiter" />} />
+          <Route path="/applied-jobs" element={<AppliedJobsPage />} />
+          <Route path="/profile" element={<CandidateProfilePage />} />
+          <Route path="/manage-cv" element={<ManageCVPage />} />
+          <Route path="/cv-editor" element={<CVEditorPage />} />
+          <Route path="/market-demand" element={<RecruitmentDemandPage />} />
+        </Routes>
+        <ChatBot isOpen={isChatOpen} onToggle={toggleChat} />
+      </Layout>
+    </ChatProvider>
   );
 }
 

@@ -4,7 +4,7 @@ import {
   Eye, Users, Calendar, MapPin, DollarSign, 
   MoreVertical, Plus, Search, Filter, Clock,
   CheckCircle, AlertCircle, XCircle, BarChart3,
-  Building2, Star, Trash2, Edit3, Zap, Briefcase
+  Building2, Star, Trash2, Edit3, Zap, Briefcase, MessageCircle
 } from 'lucide-react';
 import { getEmployerJobsWithStats, deleteJob } from '../services/api';
 
@@ -124,6 +124,7 @@ const RecruiterDashboardPage = () => {
   const navItems = [
     { icon: Briefcase, label: 'Tin tuyển dụng', path: '/recruiter/dashboard', active: true },
     { icon: BarChart3, label: 'Thống kê', path: '/recruiter/stats' },
+    { icon: MessageCircle, label: 'Tin nhắn', path: '/recruiter/messages' },
     { icon: Building2, label: 'Hồ sơ công ty', path: '/recruiter/company-profile' },
     { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' }
   ];
@@ -173,19 +174,19 @@ const RecruiterDashboardPage = () => {
             {/* Stats - lấy từ API overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-gray-900">{overview?.totalJobs ?? jobs.length}</div>
+                <div className="text-3xl font-bold text-gray-900">{overview?.totalPostedJobs ?? jobs.length}</div>
                 <div className="text-sm text-gray-500">Tổng tin đăng</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-green-600">{overview?.activeJobs ?? jobs.filter(j => j.status === 'active').length}</div>
+                <div className="text-3xl font-bold text-green-600">{overview?.activeJobsCount ?? jobs.length}</div>
                 <div className="text-sm text-gray-500">Đang hiển thị</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-blue-600">{overview?.totalViews ?? jobs.reduce((sum, j) => sum + (j.views ?? 0), 0)}</div>
+                <div className="text-3xl font-bold text-blue-600">{overview?.totalViews ?? jobs.reduce((sum, j) => sum + (j.viewCount ?? 0), 0)}</div>
                 <div className="text-sm text-gray-500">Lượt xem</div>
               </div>
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-ptit-red">{overview?.totalApplications ?? jobs.reduce((sum, j) => sum + (j.applications ?? 0), 0)}</div>
+                <div className="text-3xl font-bold text-ptit-red">{overview?.totalApplications ?? jobs.reduce((sum, j) => sum + (j.candidateCount ?? 0), 0)}</div>
                 <div className="text-sm text-gray-500">Đơn ứng tuyển</div>
               </div>
             </div>
@@ -214,10 +215,11 @@ const RecruiterDashboardPage = () => {
 
             {/* Jobs List */}
             <div className="space-y-4">
-              {jobs.map((job) => {
-                const StatusIcon = statusConfig[job.status].icon;
+              {Array.isArray(jobs) && jobs.length > 0 ? jobs.map((job, index) => {
+                const statusInfo = statusConfig[job.status] || statusConfig.active;
+                const StatusIcon = statusInfo.icon;
                 return (
-                  <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                  <div key={job.id || index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                       {/* Job Info */}
                       <div className="flex-1">
@@ -239,17 +241,19 @@ const RecruiterDashboardPage = () => {
                               </span>
                               <span className="flex items-center gap-1">
                                 <DollarSign size={14} />
-                                {job.salary}
+                                {job.salaryMin && job.salaryMax 
+                                  ? `${job.salaryMin} - ${job.salaryMax} triệu`
+                                  : job.isNegotiable ? 'Thỏa thuận' : 'Lương hấp dẫn'}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock size={14} />
-                                {job.type}
+                                {job.jobType === 0 ? 'Full-time' : job.jobType === 1 ? 'Part-time' : job.jobType === 2 ? 'Internship' : 'Remote'}
                               </span>
                             </div>
                           </div>
-                          <span className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusConfig[job.status].color}`}>
+                          <span className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
                             <StatusIcon size={12} />
-                            {statusConfig[job.status].label}
+                            {statusInfo.label}
                           </span>
                         </div>
                       </div>
@@ -259,14 +263,14 @@ const RecruiterDashboardPage = () => {
                         <div>
                           <div className="flex items-center justify-center gap-1 text-gray-900 font-bold">
                             <Eye size={16} className="text-gray-400" />
-                            {job.views}
+                            {job.viewCount}
                           </div>
                           <div className="text-xs text-gray-400 mt-0.5">Lượt xem</div>
                         </div>
                         <div>
                           <div className="flex items-center justify-center gap-1 text-ptit-red font-bold">
                             <Users size={16} className="text-gray-400" />
-                            {job.applications}
+                            {job.candidateCount}
                           </div>
                           <div className="text-xs text-gray-400 mt-0.5">Ứng viên</div>
                         </div>
@@ -318,7 +322,11 @@ const RecruiterDashboardPage = () => {
                     </div>
                   </div>
                 );
-              })}
+              }) : !loading && (
+                <div className="bg-white rounded-2xl p-12 text-center text-gray-400 border border-dashed border-gray-200">
+                  Bạn chưa đăng tin tuyển dụng nào.
+                </div>
+              )}
             </div>
           </div>
         </div>
