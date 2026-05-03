@@ -14,6 +14,8 @@ const Header = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userEmail'); // Make sure to remove email as well!
+    window.dispatchEvent(new Event('authChange'));
     navigate('/login');
   };
 

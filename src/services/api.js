@@ -152,6 +152,11 @@ export const getEmployerJobsWithStats = async (keyword = '') => {
   return data.data;
 };
 
+export const getEmployerDetailedStats = async (days = 180) => {
+  const data = await apiFetch(`/Jobs/detailed-stats?days=${days}`);
+  return data.data;
+};
+
 export const postJob = async (dto) => {
   const data = await apiFetch('/Jobs', {
     method: 'POST',

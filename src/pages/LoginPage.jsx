@@ -28,6 +28,9 @@ const LoginPage = () => {
       if (result.user?.id) sessionStorage.setItem('userId', result.user.id);
       if (result.user?.fullName) sessionStorage.setItem('userFullName', result.user.fullName);
 
+      // Thông báo cho toàn bộ app biết là trạng thái auth đã đổi
+      window.dispatchEvent(new Event('authChange'));
+
       if (role === 'recruiter') {
         navigate('/recruiter/dashboard');
       } else {

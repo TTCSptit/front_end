@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
-import { getAiSkills, createAiWebSocket, getAiChatHistory } from '../services/aiService';
+import { chatWithAiStream, getAiChatHistory } from '../services/aiService';
 
 const ChatContext = createContext();
 
@@ -25,21 +25,22 @@ export const ChatProvider = ({ children }) => {
     }]
   });
 
-  const socketRef = useRef(null);
   const currentBotMsgIdRef = useRef(null);
   const currentBotContentRef = useRef("");
-  const retryCountRef = useRef(0);
-  const maxRetries = 5;
 
-  // Initialize socket and load history once on mount
+  // Load history once on mount
   useEffect(() => {
     loadHistory();
-    initWebSocket();
+
+    const handleAuthChange = () => {
+      console.log("Auth changed, reloading history...");
+      loadHistory();
+    };
+
+    window.addEventListener('authChange', handleAuthChange);
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
+      window.removeEventListener('authChange', handleAuthChange);
     };
   }, []);
 
@@ -49,19 +50,32 @@ export const ChatProvider = ({ children }) => {
       const history = await getAiChatHistory(userId);
       if (history && Array.isArray(history) && history.length > 0) {
         const sortedHistory = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        const mappedHistory = sortedHistory.map(m => ({
-          id: `hist-${m.id}`,
-          text: m.message,
-          sender: m.role === 'user' ? 'user' : 'bot',
-          timestamp: new Date(m.timestamp),
-          aiData: m.aiDataJson ? JSON.parse(m.aiDataJson) : null
-        }));
+        const mappedHistory = sortedHistory.map(m => {
+          // Xử lý linh hoạt các case của thuộc tính JSON từ Backend
+          const rawData = m.aiDataJson || m.AiDataJson || m.ai_data_json;
+          let parsedData = null;
+          try {
+            parsedData = rawData ? (typeof rawData === 'string' ? JSON.parse(rawData) : rawData) : null;
+          } catch (e) {
+            console.error("Failed to parse AI data JSON:", e);
+          }
 
-        const lastDataMsg = [...mappedHistory].reverse().find(m => m.aiData && (m.aiData.matching_score !== undefined || m.aiData.skill_matrix));
+          return {
+            id: `hist-${m.id}`,
+            text: m.message,
+            sender: m.role === 'user' ? 'user' : 'bot',
+            timestamp: new Date(m.timestamp),
+            aiData: parsedData
+          };
+        });
+
+        // Tìm tin nhắn cuối cùng có chứa dữ liệu AI để hiển thị Dashboard
+        const lastDataMsg = [...mappedHistory].reverse().find(m => 
+          m.aiData && (m.aiData.matching_score !== undefined || m.aiData.skill_matrix || m.aiData.matchingScore)
+        );
+        
         if (lastDataMsg) {
-          const aiData = lastDataMsg.aiData;
-          setDashboardData(aiData);
-          updateSkillChart(aiData);
+          updateDashboard(lastDataMsg.aiData);
         }
 
         setMessages(mappedHistory);
@@ -71,85 +85,33 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
-  const initWebSocket = () => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+  const updateDashboard = (newAiData) => {
+    if (!newAiData) return;
     
-    const userId = sessionStorage.getItem('userEmail') || 'guest';
-    const ws = createAiWebSocket(userId);
+    // Đồng bộ xử lý cả object và chuỗi JSON
+    const data = typeof newAiData === 'string' ? JSON.parse(newAiData) : newAiData;
+    
+    // Chuẩn hóa tên trường giữa các phiên bản model
+    const info = data.candidate_info || data.candidateInfo || {};
+    const score = data.matching_score !== undefined ? data.matching_score : (data.matchingScore || 0);
+    const extracted = data.extracted_skills || data.extractedSkills || [];
+    const missing = data.missing_skills || data.missingSkills || [];
+    const skills = data.skill_matrix || data.skillMatrix;
 
-    ws.onopen = () => {
-      console.log("Global AI WebSocket Connected");
-      retryCountRef.current = 0;
-    };
+    setDashboardData(prev => ({
+      ...prev,
+      matching_score: score,
+      candidate_info: {
+        name: info.name || prev.candidate_info.name,
+        email: info.email || prev.candidate_info.email
+      },
+      extracted_skills: extracted,
+      missing_skills: missing
+    }));
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.action) {
-        if (data.action === 'job_hunt') {
-          setMessages(prev => [...prev, {
-            id: Date.now(),
-            text: `🔔 ${data.message}`,
-            sender: 'bot',
-            timestamp: new Date()
-          }]);
-        }
-        return;
-      }
-
-      if (data.type === 'status' || data.status) {
-        const statusText = data.status || data.message || '';
-        if (currentBotMsgIdRef.current) {
-          setMessages(prev => prev.map(m =>
-            m.id === currentBotMsgIdRef.current ? { ...m, statusText, text: '' } : m
-          ));
-        }
-        return;
-      }
-
-      if (data.type === 'content' || data.chunk !== undefined) {
-        const chunk = data.content ?? data.chunk ?? '';
-        currentBotContentRef.current += chunk;
-        setMessages(prev => prev.map(m =>
-          m.id === currentBotMsgIdRef.current
-            ? { ...m, text: currentBotContentRef.current, statusText: null }
-            : m
-        ));
-        return;
-      }
-
-      if (data.type === 'end' || data.done) {
-        setIsTyping(false);
-        const aiData = data.data ?? data.ai_data_json;
-        if (aiData) {
-          const parsed = typeof aiData === 'string' ? JSON.parse(aiData) : aiData;
-          if (parsed?.matching_score !== undefined) {
-            setDashboardData(parsed);
-            updateSkillChart(parsed);
-          }
-        }
-        currentBotContentRef.current = '';
-        currentBotMsgIdRef.current = null;
-        return;
-      }
-    };
-
-    ws.onclose = () => {
-      console.log("Global AI WebSocket Disconnected");
-      if (retryCountRef.current < maxRetries) {
-        retryCountRef.current++;
-        const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 10000);
-        setTimeout(initWebSocket, delay);
-      }
-    };
-
-    socketRef.current = ws;
-  };
-
-  const updateSkillChart = (aiData) => {
-    if (aiData.skill_matrix) {
-      const labels = Object.keys(aiData.skill_matrix);
-      const dataValues = Object.values(aiData.skill_matrix);
+    if (skills) {
+      const labels = Object.keys(skills);
+      const dataValues = Object.values(skills);
       setRadarData({
         labels: labels,
         datasets: [{
@@ -163,10 +125,12 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
-  const sendMessage = (textMessage, overrideCvId = null) => {
+  const sendMessage = async (textMessage, overrideCvId = null) => {
     if (!textMessage?.trim()) return;
     
     const currentCvId = overrideCvId || cvId;
+    const userId = sessionStorage.getItem('userEmail') || 'guest';
+
     const newUserMessage = {
       id: Date.now(),
       text: textMessage,
@@ -177,21 +141,90 @@ export const ChatProvider = ({ children }) => {
     setMessages(prev => [...prev, newUserMessage]);
     setIsTyping(true);
 
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      const botMsgId = Date.now() + 1;
-      currentBotMsgIdRef.current = botMsgId;
-      currentBotContentRef.current = '';
-      setMessages(prev => [...prev, { id: botMsgId, text: '', statusText: 'AI đang suy nghĩ...', sender: 'bot', timestamp: new Date() }]);
+    const botMsgId = Date.now() + 1;
+    currentBotMsgIdRef.current = botMsgId;
+    currentBotContentRef.current = '';
+    
+    setMessages(prev => [...prev, { 
+      id: botMsgId, 
+      text: '', 
+      statusText: 'Đang kết nối AI...', 
+      sender: 'bot', 
+      timestamp: new Date() 
+    }]);
+    
+    try {
+      const stream = await chatWithAiStream(textMessage, sessionId, userId, null, currentCvId);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let buffer = '';
       
-      socketRef.current.send(JSON.stringify({
-        message: textMessage,
-        session_id: sessionId,
-        ...(currentCvId ? { cv_id: currentCvId } : {})
-      }));
-    } else {
+      let isReadingData = false;
+      let aiDataJsonString = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          
+          const lines = buffer.split('\n');
+          // Giữ lại phần chưa hoàn chỉnh
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const rawDataStr = line.substring(6);
+              const dataStrTrimmed = rawDataStr.trim();
+              
+              if (dataStrTrimmed === '[DONE]') {
+                done = true;
+                break;
+              }
+              if (dataStrTrimmed === '---DATA---') {
+                isReadingData = true;
+                continue;
+              }
+              
+              if (isReadingData) {
+                aiDataJsonString += rawDataStr;
+              } else {
+                // Parse newline từ chuỗi thoát
+                const textChunk = rawDataStr.replace(/\\n/g, '\n');
+                currentBotContentRef.current += textChunk;
+                
+                setMessages(prev => prev.map(m =>
+                  m.id === currentBotMsgIdRef.current
+                    ? { ...m, text: currentBotContentRef.current, statusText: null }
+                    : m
+                ));
+              }
+            }
+          }
+        }
+      }
+      
+      // Sau khi đọc xong stream, cập nhật dashboard nếu có dữ liệu json
+      if (aiDataJsonString) {
+        try {
+          const parsed = JSON.parse(aiDataJsonString);
+          updateDashboard(parsed);
+        } catch (e) {
+          console.error("Failed to parse ai_data_json from SSE", e);
+        }
+      }
+      
+    } catch (err) {
+      console.error("Lỗi khi stream tin nhắn:", err);
+      setMessages(prev => prev.map(m =>
+        m.id === currentBotMsgIdRef.current
+          ? { ...m, text: m.text + `\n\n(Lỗi kết nối: ${err.message})`, statusText: null }
+          : m
+      ));
+    } finally {
       setIsTyping(false);
-      initWebSocket();
-      // Optionally queue message or show error
+      currentBotMsgIdRef.current = null;
     }
   };
 

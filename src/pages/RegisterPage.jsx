@@ -43,6 +43,9 @@ const RegisterPage = () => {
       sessionStorage.setItem('userRole', userType === 'employer' ? 'recruiter' : 'candidate');
       sessionStorage.setItem('userEmail', loginResult.user?.email ?? formData.email);
 
+      // Thông báo cho toàn bộ app biết là trạng thái auth đã đổi
+      window.dispatchEvent(new Event('authChange'));
+
       if (userType === 'employer') {
         navigate('/recruiter/dashboard');
       } else {

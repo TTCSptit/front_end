@@ -3,11 +3,15 @@ const AI_BASE_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azure
 /**
  * Gửi tin nhắn và nhận stream từ AI qua Backend proxy
  */
-export const chatWithAiStream = async (message, sessionId, userId, cvFile) => {
+export const chatWithAiStream = async (message, sessionId, userId, cvFile, cvId) => {
   const formData = new FormData();
   formData.append('message', message);
   formData.append('session_id', sessionId);
   formData.append('user_id', userId || 'guest');
+  
+  if (cvId) {
+    formData.append('cv_id', cvId);
+  }
   
   if (cvFile) {
     formData.append('cv_file', cvFile);
