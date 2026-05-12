@@ -265,10 +265,6 @@ const RecruiterStatsPage = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition shadow-sm">
-              <Download size={18} />
-              Xuất báo cáo
-            </button>
             <select 
               value={daysFilter}
               onChange={(e) => setDaysFilter(Number(e.target.value))}
@@ -369,7 +365,6 @@ const RecruiterStatsPage = () => {
           <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-sm border border-white/50 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-gray-900">Tin tuyển dụng hiệu quả nhất</h3>
-              <button className="text-ptit-red font-bold text-sm hover:underline">Xem tất cả</button>
             </div>
             <div className="space-y-6">
               {statsData.jobs.length > 0 ? statsData.jobs.map((job, index) => {
@@ -408,28 +403,8 @@ const RecruiterStatsPage = () => {
           </div>
 
           {/* Quick Metrics & Info */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-ptit-red rounded-3xl p-8 text-white shadow-xl shadow-ptit-red/20 flex flex-col justify-between animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Clock size={24} />
-              </div>
-              <div>
-                <div className="text-4xl font-black mb-1">14 ngày</div>
-                <div className="text-sm font-bold opacity-80 uppercase tracking-wider">Thời gian tuyển trung bình</div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-900 rounded-3xl p-8 text-white shadow-xl shadow-gray-900/10 flex flex-col justify-between animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                <Target size={24} />
-              </div>
-              <div>
-                <div className="text-4xl font-black mb-1">92%</div>
-                <div className="text-sm font-bold opacity-80 uppercase tracking-wider">Tỉ lệ giữ chân (6 tháng)</div>
-              </div>
-            </div>
-
-            <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/50 col-span-2 flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '700ms' }}>
+          <div className="flex flex-col gap-6">
+            <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/50 flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '500ms' }}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
                   <UserCheck size={24} />

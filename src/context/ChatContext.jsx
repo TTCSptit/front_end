@@ -4,17 +4,27 @@ import { chatWithAiStream, getAiChatHistory } from '../services/aiService';
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const [messages, setMessages] = useState([]);
+  // Persistence helpers
+  const getStored = (key, fallback) => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : fallback;
+    } catch (e) { return fallback; }
+  };
+
+  const [messages, setMessages] = useState(() => getStored('chat_messages', []));
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => "SESSION-" + Math.random().toString(36).substr(2, 9));
   const [cvId, setCvId] = useState(null);
-  const [dashboardData, setDashboardData] = useState({
+  
+  const [dashboardData, setDashboardData] = useState(() => getStored('chat_dashboard', {
     candidate_info: { name: "Chưa rõ", email: "Chưa rõ" },
     matching_score: 0,
     extracted_skills: [],
     missing_skills: []
-  });
-  const [radarData, setRadarData] = useState({
+  }));
+
+  const [radarData, setRadarData] = useState(() => getStored('chat_radar', {
     labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Soft Skills'],
     datasets: [{
       label: 'Cấp độ kỹ năng',
@@ -23,7 +33,7 @@ export const ChatProvider = ({ children }) => {
       borderColor: '#ef4444',
       pointBackgroundColor: '#ef4444',
     }]
-  });
+  }));
 
   const currentBotMsgIdRef = useRef(null);
   const currentBotContentRef = useRef("");
@@ -34,6 +44,30 @@ export const ChatProvider = ({ children }) => {
 
     const handleAuthChange = () => {
       console.log("Auth changed, reloading history...");
+      const userId = sessionStorage.getItem('userEmail');
+      if (!userId) {
+        // User logged out, clear local cache
+        localStorage.removeItem('chat_messages');
+        localStorage.removeItem('chat_dashboard');
+        localStorage.removeItem('chat_radar');
+        setMessages([]);
+        setDashboardData({
+          candidate_info: { name: "Chưa rõ", email: "Chưa rõ" },
+          matching_score: 0,
+          extracted_skills: [],
+          missing_skills: []
+        });
+        setRadarData({
+          labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Soft Skills'],
+          datasets: [{
+            label: 'Cấp độ kỹ năng',
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderColor: '#ef4444',
+            pointBackgroundColor: '#ef4444',
+          }]
+        });
+      }
       loadHistory();
     };
 
@@ -43,6 +77,19 @@ export const ChatProvider = ({ children }) => {
       window.removeEventListener('authChange', handleAuthChange);
     };
   }, []);
+
+  // Persist to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('chat_messages', JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem('chat_dashboard', JSON.stringify(dashboardData));
+  }, [dashboardData]);
+
+  useEffect(() => {
+    localStorage.setItem('chat_radar', JSON.stringify(radarData));
+  }, [radarData]);
 
   const loadHistory = async () => {
     const userId = sessionStorage.getItem('userEmail') || 'guest';

@@ -5,7 +5,7 @@ import {
   Star, Clock, MapPin, Briefcase, Filter, Search,
   CheckCircle, XCircle, MessageSquare, Users
 } from 'lucide-react';
-import { getApplicants, updateApplicationStatus, getApplicantCvUrl, downloadProtectedFile, sendMessage } from '../services/api';
+import { getApplicants, updateApplicationStatus, getApplicantCvUrl, downloadProtectedFile, sendMessage, getSavedCandidates, saveCandidate, unsaveCandidate } from '../services/api';
 
 const statusConfig = {
   new: { label: 'Mới', color: 'bg-blue-100 text-blue-700' },
@@ -29,6 +29,7 @@ const JobApplicantsPage = () => {
     format: 'Phỏng vấn Online (Google Meet/Zoom)',
     notes: ''
   });
+  const [savedIds, setSavedIds] = useState([]);
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -43,6 +44,16 @@ const JobApplicantsPage = () => {
       }
     };
     fetchApplicants();
+
+    const fetchSaved = async () => {
+      try {
+        const saved = await getSavedCandidates();
+        setSavedIds(saved.map(c => c.candidateId));
+      } catch (err) {
+        console.error('Failed to fetch saved candidates:', err);
+      }
+    };
+    fetchSaved();
   }, [jobId]);
 
   const getStatusLabel = (status) => {
@@ -97,6 +108,31 @@ const JobApplicantsPage = () => {
       }
     } catch (err) {
       alert('Gửi tin nhắn thất bại: ' + err.message);
+    }
+  };
+
+  const toggleSaveCandidate = async (applicant) => {
+    const isSaved = savedIds.includes(applicant.userId);
+    
+    try {
+      if (isSaved) {
+        await unsaveCandidate(applicant.userId);
+        setSavedIds(prev => prev.filter(id => id !== applicant.userId));
+      } else {
+        try {
+          await saveCandidate(applicant.userId);
+          setSavedIds(prev => [...prev, applicant.userId]);
+        } catch (err) {
+          if (err.message.includes('already saved')) {
+            // Nếu BE báo đã lưu rồi thì cập nhật lại state FE cho đồng bộ
+            setSavedIds(prev => [...prev, applicant.userId]);
+          } else {
+            throw err;
+          }
+        }
+      }
+    } catch (err) {
+      alert('Thao tác thất bại: ' + err.message);
     }
   };
 
@@ -211,8 +247,22 @@ const JobApplicantsPage = () => {
             {selectedApplicant ? (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28 animate-fade-in">
                 <div className="text-center mb-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4 shadow-lg">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4 shadow-lg relative">
                     {selectedApplicant.fullName.charAt(0)}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSaveCandidate(selectedApplicant);
+                      }}
+                      className={`absolute -right-2 -bottom-2 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white transition-all shadow-md ${
+                        savedIds.includes(selectedApplicant.userId) 
+                          ? 'bg-yellow-400 text-white' 
+                          : 'bg-gray-100 text-gray-400 hover:text-yellow-500'
+                      }`}
+                      title={savedIds.includes(selectedApplicant.userId) ? "Bỏ lưu" : "Lưu ứng viên"}
+                    >
+                      <Star size={18} fill={savedIds.includes(selectedApplicant.userId) ? "currentColor" : "none"} />
+                    </button>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">{selectedApplicant.fullName}</h3>
                 </div>
@@ -226,11 +276,21 @@ const JobApplicantsPage = () => {
 
                 <div className="flex flex-col gap-3">
                   <button 
-                    onClick={() => downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`)}
-                    className="flex items-center justify-center gap-2 w-full py-4 bg-ptit-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200"
+                    onClick={() => {
+                      if (!selectedApplicant.cvurl) {
+                        alert('Ứng viên này chưa tải lên CV.');
+                        return;
+                      }
+                      downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`);
+                    }}
+                    className={`flex items-center justify-center gap-2 w-full py-4 font-bold rounded-xl transition shadow-lg ${
+                      selectedApplicant.cvurl 
+                        ? 'bg-ptit-red text-white hover:bg-red-700 shadow-red-200' 
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                    }`}
                   >
                     <Download size={20} />
-                    Tải CV
+                    {selectedApplicant.cvurl ? 'Tải CV' : 'Chưa có CV'}
                   </button>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
@@ -253,12 +313,12 @@ const JobApplicantsPage = () => {
                       }`}
                     >
                       <XCircle size={18} />
-                      {selectedApplicant.status === 'Rejected' ? 'Từ chối' : 'Từ chối'}
+                      {selectedApplicant.status === 'Rejected' ? 'Từ chối' : 'Loại'}
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-2">
                     <button 
-                      onClick={() => navigate(`/recruiter/messages?contact=${selectedApplicant.userId}`)}
+                      onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}`)}
                       className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md"
                     >
                       <MessageSquare size={18} />

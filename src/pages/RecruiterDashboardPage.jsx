@@ -140,13 +140,15 @@ const RecruiterDashboardPage = () => {
                 <Link 
                   key={index}
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300 ${
                     item.active 
-                      ? 'bg-ptit-red text-white shadow-lg shadow-red-100' 
-                      : 'text-gray-600 hover:bg-white hover:shadow-sm'
+                      ? 'bg-gradient-to-r from-ptit-red to-red-600 text-white shadow-lg shadow-red-200 translate-x-2' 
+                      : 'text-gray-600 hover:bg-white hover:text-ptit-red hover:shadow-md'
                   }`}
                 >
-                  <item.icon size={20} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.active ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>
+                    <item.icon size={18} />
+                  </div>
                   {item.label}
                 </Link>
               ))}
@@ -171,23 +173,49 @@ const RecruiterDashboardPage = () => {
               </Link>
             </div>
 
-            {/* Stats - lấy từ API overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-gray-900">{overview?.totalPostedJobs ?? jobs.length}</div>
-                <div className="text-sm text-gray-500">Tổng tin đăng</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                    <Briefcase size={24} />
+                  </div>
+                  <div className="text-3xl font-black text-gray-900 leading-none">{overview?.totalPostedJobs ?? jobs.length}</div>
+                  <div className="text-sm font-semibold text-gray-500 mt-2">Tổng tin đăng</div>
+                </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-green-600">{overview?.activeJobsCount ?? jobs.length}</div>
-                <div className="text-sm text-gray-500">Đang hiển thị</div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                    <CheckCircle size={24} />
+                  </div>
+                  <div className="text-3xl font-black text-emerald-600 leading-none">{overview?.activeJobsCount ?? jobs.length}</div>
+                  <div className="text-sm font-semibold text-gray-500 mt-2">Đang hiển thị</div>
+                </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-blue-600">{overview?.totalViews ?? jobs.reduce((sum, j) => sum + (j.viewCount ?? 0), 0)}</div>
-                <div className="text-sm text-gray-500">Lượt xem</div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+                    <Eye size={24} />
+                  </div>
+                  <div className="text-3xl font-black text-amber-600 leading-none">{overview?.totalViews ?? 0}</div>
+                  <div className="text-sm font-semibold text-gray-500 mt-2">Lượt xem</div>
+                </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition hover:shadow-md">
-                <div className="text-3xl font-bold text-ptit-red">{overview?.totalApplications ?? jobs.reduce((sum, j) => sum + (j.candidateCount ?? 0), 0)}</div>
-                <div className="text-sm text-gray-500">Đơn ứng tuyển</div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-rose-100 text-ptit-red rounded-2xl flex items-center justify-center mb-4">
+                    <Users size={24} />
+                  </div>
+                  <div className="text-3xl font-black text-ptit-red leading-none">{overview?.totalApplications ?? 0}</div>
+                  <div className="text-sm font-semibold text-gray-500 mt-2">Đơn ứng tuyển</div>
+                </div>
               </div>
             </div>
 
@@ -216,11 +244,21 @@ const RecruiterDashboardPage = () => {
             {/* Jobs List */}
             <div className="space-y-4">
               {Array.isArray(jobs) && jobs.length > 0 ? jobs.map((job, index) => {
-                const statusInfo = statusConfig[job.status] || statusConfig.active;
+                // Calculate effective status
+                const deadline = job.expiresAt || job.deadline || job.expiredAt;
+                const isExpired = deadline ? new Date(deadline) < new Date() : false;
+                const effectiveStatus = isExpired ? 'expired' : (job.status || 'active');
+                
+                const statusInfo = statusConfig[effectiveStatus] || statusConfig.active;
                 const StatusIcon = statusInfo.icon;
                 return (
-                  <div key={job.id || index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div key={job.id || index} className={`bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:border-ptit-red/20 transition-all duration-300 relative overflow-hidden group ${isExpired ? 'opacity-75' : ''}`}>
+                    {/* Accent Bar */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2 ${
+                      isExpired ? 'bg-gray-300' : 'bg-ptit-red'
+                    }`}></div>
+
+                    <div className="flex flex-col md:flex-row md:items-center gap-6">
                       {/* Job Info */}
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
@@ -251,28 +289,29 @@ const RecruiterDashboardPage = () => {
                               </span>
                             </div>
                           </div>
-                          <span className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                            <StatusIcon size={12} />
+                          <span className={`shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${statusInfo.color} shadow-sm`}>
+                            <StatusIcon size={12} strokeWidth={3} />
                             {statusInfo.label}
                           </span>
                         </div>
                       </div>
 
                       {/* Stats */}
-                      <div className="flex items-center gap-6 text-center shrink-0">
-                        <div>
-                          <div className="flex items-center justify-center gap-1 text-gray-900 font-bold">
-                            <Eye size={16} className="text-gray-400" />
+                      <div className="flex items-center gap-8 text-center shrink-0 bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        <div className="min-w-[60px]">
+                          <div className="flex items-center justify-center gap-1.5 text-gray-900 font-black text-lg">
+                            <Eye size={18} className="text-amber-500" />
                             {job.viewCount}
                           </div>
-                          <div className="text-xs text-gray-400 mt-0.5">Lượt xem</div>
+                          <div className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Lượt xem</div>
                         </div>
-                        <div>
-                          <div className="flex items-center justify-center gap-1 text-ptit-red font-bold">
-                            <Users size={16} className="text-gray-400" />
+                        <div className="w-px h-8 bg-gray-200"></div>
+                        <div className="min-w-[60px]">
+                          <div className="flex items-center justify-center gap-1.5 text-ptit-red font-black text-lg">
+                            <Users size={18} className="text-ptit-red" />
                             {job.candidateCount}
                           </div>
-                          <div className="text-xs text-gray-400 mt-0.5">Ứng viên</div>
+                          <div className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Ứng viên</div>
                         </div>
                       </div>
 
@@ -280,7 +319,7 @@ const RecruiterDashboardPage = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <Link 
                           to={`/recruiter/jobs/${job.id}/applicants`}
-                          className="px-4 py-2.5 bg-ptit-red text-white text-sm font-bold rounded-xl hover:bg-red-700 transition"
+                          className="px-6 py-3 bg-gradient-to-r from-ptit-red to-red-600 text-white text-sm font-black rounded-2xl hover:shadow-lg hover:shadow-red-200 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-md"
                         >
                           Ứng viên
                         </Link>

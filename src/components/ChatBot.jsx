@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { MessageSquare, X, Send, Bot, User, Briefcase, Minus, Headphones, Paperclip, FileText, Github, BarChart2, MessageCircle, Sparkles } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { getAiSkills, createAiWebSocket, uploadCvForWs, getAiChatHistory } from '../services/aiService';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Radar } from 'react-chartjs-2';
+import { Virtuoso } from 'react-virtuoso';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -24,95 +27,10 @@ ChartJS.register(
 
 import { useChat } from '../context/ChatContext';
 
-const ChatBot = ({ isOpen, onToggle }) => {
-  const location = useLocation();
-  const isRecruiter = location.pathname.startsWith('/recruiter');
-  
-  const { 
-    messages, setMessages, isTyping, setIsTyping, 
-    sendMessage, dashboardData, setDashboardData, 
-    radarData, setRadarData, cvId, setCvId 
-  } = useChat();
-
-  const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState('chat'); 
-
-  const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-    }
-    
-    const handleOpenChat = (e) => {
-      if (!isOpen) onToggle();
-      if (e.detail?.message) {
-        setTimeout(() => {
-          sendMessage(e.detail.message);
-        }, 500);
-      }
-    };
-
-    window.addEventListener('open-chatbot', handleOpenChat);
-    return () => window.removeEventListener('open-chatbot', handleOpenChat);
-  }, [isOpen, onToggle]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    e.target.value = '';
-
-    const fileUserMsg = {
-      id: Date.now(),
-      text: `📎 ${file.name}`,
-      sender: 'user',
-      isFile: true,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, fileUserMsg]);
-    setIsTyping(true);
-
-    try {
-      const result = await uploadCvForWs(file);
-      setCvId(result.cv_id);
-      sendMessage("Hãy phân tích file CV tôi vừa gửi và cho tôi lời khuyên về sự nghiệp.", result.cv_id);
-    } catch (err) {
-      setMessages(prev => [...prev, { 
-        id: Date.now(), 
-        text: `❌ Lỗi tải CV: ${err.message}`, 
-        sender: 'bot', 
-        timestamp: new Date() 
-      }]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!inputValue.trim()) return;
-    const messageText = inputValue;
-    setInputValue('');
-    sendMessage(messageText);
-  };
-
-  const promptGithub = () => {
-    const gh_url = prompt('Nhập link Github hoặc username của bạn (vd: microsoft):');
-    if (gh_url) {
-      processChatMessage(`Review giúp mình profile github này với: ${gh_url}`);
-    }
-  };
-
+// --- KỸ THUẬT 2: TÁCH BIỆT LOGIC RENDER TIN NHẮN (MEMOIZATION) ---
+const MessageItem = memo(({ msg, onSendMessage }) => {
   const renderMessageContent = (text) => {
+    if (!text) return null;
     const regex = /\[ROADMAP\]([\s\S]*?)\[\/ROADMAP\]|\[QUIZ\]([\s\S]*?)\[\/QUIZ\]|\[CODE_EDITOR\]([\s\S]*?)\[\/CODE_EDITOR\]/g;
     const parts = [];
     let lastIndex = 0;
@@ -120,23 +38,24 @@ const ChatBot = ({ isOpen, onToggle }) => {
 
     while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex, match.index)}</span>);
+        const txtPart = text.substring(lastIndex, match.index);
+        parts.push(
+          <div key={`txt-${lastIndex}`} className="markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{txtPart}</ReactMarkdown>
+          </div>
+        );
       }
       
-      const rmMatch = match[1];
-      const qzMatch = match[2];
-      const cdMatch = match[3];
+      const [_, rmMatch, qzMatch, cdMatch] = match;
 
       if (rmMatch) {
         const nodes = rmMatch.split(',').map(n => n.trim()).filter(Boolean);
         parts.push(
           <div key={`rm-${match.index}`} className="mt-3 mb-2 p-3 bg-red-50 border border-red-100 rounded-xl overflow-hidden shadow-sm font-sans block w-[280px]">
-            <strong className="text-red-700 flex items-center gap-2 mb-2 text-sm">
-               ⚡ Lộ trình cá nhân hóa:
-            </strong>
+            <strong className="text-red-700 flex items-center gap-2 mb-2 text-sm">⚡ Lộ trình cá nhân hóa:</strong>
             <div className="flex flex-col gap-2">
               {nodes.map((node, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 bg-white border border-red-100 rounded-lg cursor-pointer hover:border-red-400 hover:shadow-sm transition-all" onClick={() => alert(`Tương tác: ${node}`)}>
+                <div key={i} className="flex items-center gap-3 p-2 bg-white border border-red-100 rounded-lg cursor-pointer hover:border-red-400 hover:shadow-sm transition-all">
                   <div className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
                   <span className="text-[13px] font-medium text-gray-700 leading-tight">{node}</span>
                 </div>
@@ -156,11 +75,12 @@ const ChatBot = ({ isOpen, onToggle }) => {
                {options.map((opt, i) => {
                  const letter = String.fromCharCode(65 + i);
                  return (
-                 <button key={i} onClick={() => sendMessage(`Tôi chọn phương án ${letter}:\n${opt}`)} className="text-left w-full items-center gap-3 p-2 bg-white border border-green-100 rounded-lg cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all font-sans">
-                   <span className="text-green-600 font-bold mr-2">{letter}.</span>
-                   <span className="text-[13px] font-medium text-gray-700">{opt}</span>
-                 </button>
-               )})}
+                   <button key={i} onClick={() => onSendMessage(`Tôi chọn phương án ${letter}:\n${opt}`)} className="text-left w-full items-center gap-3 p-2 bg-white border border-green-100 rounded-lg cursor-pointer hover:bg-green-100 hover:border-green-300 transition-all font-sans">
+                     <span className="text-green-600 font-bold mr-2">{letter}.</span>
+                     <span className="text-[13px] font-medium text-gray-700">{opt}</span>
+                   </button>
+                 );
+               })}
              </div>
            </div>
          );
@@ -176,7 +96,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
              <button onClick={() => {
                  const textarea = document.getElementById(`code-editor-${match.index}`);
                  if(!textarea.value.trim()) return alert('Bạn chưa viết code!');
-                 sendMessage(`Bài giải của tôi bằng ${lang}:\n\n${textarea.value.trim()}`);
+                 onSendMessage(`Bài giải của tôi bằng ${lang}:\n\n${textarea.value.trim()}`);
                  textarea.value = '';
              }} className="w-full flex justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-xs font-bold transition-all shadow-md">
                 Chạy Code & Nộp bài
@@ -184,24 +104,191 @@ const ChatBot = ({ isOpen, onToggle }) => {
            </div>
          );
       }
-      
       lastIndex = regex.lastIndex;
     }
 
     if (lastIndex < text.length) {
-      parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex)}</span>);
+      parts.push(
+        <div key={`txt-${lastIndex}`} className="markdown-content">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.substring(lastIndex)}</ReactMarkdown>
+        </div>
+      );
     }
+    return parts;
+  };
 
-    return parts.length > 0 ? parts : text;
+  return (
+    <div className={`flex mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${msg.sender === 'user' ? 'bg-red-500 text-white rounded-tr-none' : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'}`}>
+        {msg.isFile ? (
+          <div className="flex items-center gap-2">
+             <FileText size={16} className="text-white" />
+             <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
+          </div>
+        ) : (
+          <div className="text-sm leading-relaxed break-words">
+            {msg.statusText && !msg.text ? <span className="text-gray-400 italic text-xs">{msg.statusText}</span> : renderMessageContent(msg.text)}
+          </div>
+        )}
+        <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
+          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+    </div>
+  );
+}, (prev, next) => prev.msg.text === next.msg.text && prev.msg.statusText === next.msg.statusText);
+
+// --- KỸ THUẬT 1: PHÂN MẢNH HIỂN THỊ (UI VIRTUALIZATION) ---
+const MessageList = ({ messages, isTyping, onSendMessage }) => {
+  const virtuosoRef = useRef(null);
+
+  // Tự động cuộn xuống khi có tin nhắn mới hoặc đang typing
+  useEffect(() => {
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({
+        index: messages.length - 1,
+        behavior: 'auto',
+        align: 'end'
+      });
+    }
+  }, [messages.length, isTyping]);
+
+  // Riêng đối với streaming (nội dung tin nhắn cuối cùng thay đổi liên tục)
+  const lastMessageText = messages[messages.length - 1]?.text;
+  useEffect(() => {
+    if (virtuosoRef.current && messages[messages.length - 1]?.sender === 'bot') {
+       virtuosoRef.current.scrollToIndex({
+        index: messages.length - 1,
+        behavior: 'auto',
+        align: 'end'
+      });
+    }
+  }, [lastMessageText]);
+
+  return (
+    <div className="flex-1 overflow-hidden bg-gray-50 flex flex-col">
+      <Virtuoso
+        ref={virtuosoRef}
+        data={messages}
+        followOutput={true}
+        initialTopMostItemIndex={messages.length - 1}
+        className="flex-1"
+        itemContent={(index, msg) => (
+          <div className="px-4 pt-4">
+             <MessageItem msg={msg} onSendMessage={onSendMessage} />
+          </div>
+        )}
+        components={{
+          Footer: () => isTyping ? (
+            <div className="px-4 pb-4">
+              <div className="flex justify-start">
+                <div className="bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none p-3 shadow-sm flex items-center gap-1">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              </div>
+            </div>
+          ) : <div className="h-4" />
+        }}
+      />
+    </div>
+  );
+};
+
+// --- KỸ THUẬT 3: CÁCH LY TRẠNG THÁI (STATE ISOLATION) ---
+const ChatInput = ({ onSendMessage, onFileUpload, onPromptGithub, isRecruiter }) => {
+  const [inputValue, setInputValue] = useState("");
+  const fileInputRef = useRef(null);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    onSendMessage(inputValue);
+    setInputValue("");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-3 bg-white border-t border-gray-100">
+      <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-red-100 transition-all">
+        {!isRecruiter && (
+          <>
+            <input type="file" ref={fileInputRef} onChange={onFileUpload} className="hidden" accept=".pdf,.doc,.docx" />
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors" title="Đính kèm CV">
+              <Paperclip size={18} />
+            </button>
+            <button type="button" onClick={onPromptGithub} className="p-1.5 text-gray-500 hover:text-gray-800 transition-colors" title="Github Review">
+              <Github size={18} />
+            </button>
+          </>
+        )}
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Nhập tin nhắn..."
+          className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
+        />
+        <button type="submit" disabled={!inputValue.trim()} className={`p-2 rounded-full transition-all ${inputValue.trim() ? 'bg-red-500 text-white hover:bg-red-600 shadow-md transform hover:scale-105' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
+          <Send size={16} />
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const ChatBot = ({ isOpen, onToggle }) => {
+  const location = useLocation();
+  const isRecruiter = location.pathname.startsWith('/recruiter');
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/'].includes(location.pathname);
+
+  if (isAuthPage || isRecruiter) return null;
+
+  const { 
+    messages, setMessages, isTyping, setIsTyping, 
+    sendMessage, dashboardData, radarData, setCvId 
+  } = useChat();
+
+  const [activeTab, setActiveTab] = useState('chat'); 
+
+  useEffect(() => {
+    const handleOpenChat = (e) => {
+      if (!isOpen) onToggle();
+      if (e.detail?.message) {
+        setTimeout(() => sendMessage(e.detail.message), 500);
+      }
+    };
+    window.addEventListener('open-chatbot', handleOpenChat);
+    return () => window.removeEventListener('open-chatbot', handleOpenChat);
+  }, [isOpen, onToggle]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+    setMessages(prev => [...prev, { id: Date.now(), text: `📎 ${file.name}`, sender: 'user', isFile: true, timestamp: new Date() }]);
+    setIsTyping(true);
+    try {
+      const result = await uploadCvForWs(file);
+      setCvId(result.cv_id);
+      sendMessage("Hãy phân tích file CV tôi vừa gửi và cho tôi lời khuyên về sự nghiệp.", result.cv_id);
+    } catch (err) {
+      setMessages(prev => [...prev, { id: Date.now(), text: `❌ Lỗi tải CV: ${err.message}`, sender: 'bot', timestamp: new Date() }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const promptGithub = () => {
+    const gh_url = prompt('Nhập link Github hoặc username của bạn (vd: microsoft):');
+    if (gh_url) sendMessage(`Review giúp mình profile github này với: ${gh_url}`);
   };
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {/* Chat Window */}
       {isOpen && (
         <div className="bg-white w-[350px] h-[500px] rounded-2xl shadow-2xl flex flex-col mb-4 overflow-hidden border border-gray-100 animate-fade-in-up transition-all duration-300 transform origin-bottom-right">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-red-600 to-red-500 p-4 text-white flex items-center justify-between shadow-md">
+          <div className="bg-gradient-to-r from-red-600 to-red-500 p-4 text-white flex items-center justify-between shadow-md shrink-0">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
                 {isRecruiter ? <Headphones size={24} className="text-white" /> : <Bot size={24} className="text-white" />}
@@ -209,8 +296,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
               <div>
                 <h3 className="font-bold text-lg leading-tight">{isRecruiter ? 'Admin Hỗ trợ' : 'PTIT Bot'}</h3>
                 <span className="text-xs text-red-100 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Online
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
                 </span>
               </div>
             </div>
@@ -221,70 +307,18 @@ const ChatBot = ({ isOpen, onToggle }) => {
                    {activeTab === 'chat' ? 'Dashboard' : 'Chat'}
                  </button>
                )}
-               <button onClick={onToggle} className="p-1 hover:bg-white/20 rounded-full transition-colors" title="Minimize">
-                <Minus size={18} />
-              </button>
-              <button onClick={onToggle} className="p-1 hover:bg-white/20 rounded-full transition-colors" title="Close">
-                <X size={18} />
-              </button>
+               <button onClick={onToggle} className="p-1 hover:bg-white/20 rounded-full transition-colors"><Minus size={18} /></button>
+               <button onClick={onToggle} className="p-1 hover:bg-white/20 rounded-full transition-colors"><X size={18} /></button>
             </div>
           </div>
 
-          {/* Tabs Content */}
           <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
             {activeTab === 'chat' ? (
-              /* Messages Area */
-              <div className="flex-1 overflow-y-auto p-4 scroll-smooth">
-                {messages.map((msg, index) => (
-                  <div
-                    key={msg.id || index}
-                    className={`flex mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${
-                        msg.sender === 'user'
-                          ? 'bg-red-500 text-white rounded-tr-none'
-                          : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
-                      }`}
-                    >
-                      {msg.isFile ? (
-                        <div className="flex items-center gap-2">
-                           <FileText size={16} className="text-white" />
-                           <span className="text-sm font-medium underline underline-offset-2">CV: {msg.text}</span>
-                        </div>
-                      ) : (
-                        <div className="text-sm leading-relaxed whitespace-pre-line break-words">
-                          {msg.statusText && !msg.text ? (
-                            <span className="text-gray-400 italic text-xs">{msg.statusText}</span>
-                          ) : renderMessageContent(msg.text)}
-                        </div>
-                      )}
-                      <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                
-                 {isTyping && (
-                  <div className="flex justify-start mb-4">
-                    <div className="bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none p-3 shadow-sm flex items-center gap-1">
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+              <MessageList messages={messages} isTyping={isTyping} onSendMessage={sendMessage} />
             ) : (
-              /* Dashboard Area */
               <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 animate-fade-in">
-                {/* Score Card */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center justify-center gap-2">
-                    <BarChart2 size={14} /> Matching Score
-                  </h4>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center justify-center gap-2"><BarChart2 size={14} /> Matching Score</h4>
                   <div className="relative inline-flex items-center justify-center w-24 h-24 mb-3">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-100" />
@@ -304,24 +338,11 @@ const ChatBot = ({ isOpen, onToggle }) => {
                   </div>
                 </div>
 
-                {/* Radar Chart Card */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 h-[220px]">
-                   <h4 className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-2">
-                    <Sparkles size={14} className="text-yellow-500" /> Ma Trận Kỹ Năng
-                  </h4>
-                  <div className="h-full">
-                    <Radar 
-                      data={radarData} 
-                      options={{ 
-                        scales: { r: { min: 0, max: 5, ticks: { display: false } } },
-                        plugins: { legend: { display: false } },
-                        maintainAspectRatio: false
-                      }} 
-                    />
-                  </div>
+                   <h4 className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-2"><Sparkles size={14} className="text-yellow-500" /> Ma Trận Kỹ Năng</h4>
+                   <Radar data={radarData} options={{ scales: { r: { min: 0, max: 5, ticks: { display: false } } }, plugins: { legend: { display: false } }, maintainAspectRatio: false }} />
                 </div>
 
-                {/* Skills Tags */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                   <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Kỹ năng hiện có</h4>
                   <div className="flex flex-wrap gap-1.5">
@@ -329,7 +350,6 @@ const ChatBot = ({ isOpen, onToggle }) => {
                       <span key={i} className="px-2 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-bold border border-green-100">{s}</span>
                     )) : <span className="text-[10px] text-gray-400 italic">Chưa có dữ liệu</span>}
                   </div>
-                  
                   <h4 className="text-xs font-bold text-gray-400 uppercase mt-4 mb-3">Cần cải thiện</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {dashboardData.missing_skills.length > 0 ? dashboardData.missing_skills.map((s, i) => (
@@ -341,65 +361,14 @@ const ChatBot = ({ isOpen, onToggle }) => {
             )}
           </div>
 
-          {/* Input Area */}
-          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-gray-100">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-red-100 transition-all">
-              {!isRecruiter && (
-                <>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload} 
-                    className="hidden" 
-                    accept=".pdf,.doc,.docx"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
-                    title="Đính kèm CV để phân tích"
-                  >
-                    <Paperclip size={18} />
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={promptGithub}
-                    className="p-1.5 text-gray-500 hover:text-gray-800 transition-colors"
-                    title="Đánh giá Github"
-                  >
-                    <Github size={18} />
-                  </button>
-                </>
-              )}
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
-              />
-              <button 
-                type="submit" 
-                disabled={!inputValue.trim()}
-                className={`p-2 rounded-full transition-all ${
-                  inputValue.trim() 
-                    ? 'bg-red-500 text-white hover:bg-red-600 shadow-md transform hover:scale-105' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <Send size={16} />
-              </button>
-            </div>
-          </form>
+          {activeTab === 'chat' && (
+            <ChatInput onSendMessage={sendMessage} onFileUpload={handleFileUpload} onPromptGithub={promptGithub} isRecruiter={isRecruiter} />
+          )}
         </div>
       )}
 
-      {/* Toggle Button (FAB) */}
       {!isOpen && (
-        <button
-          onClick={onToggle}
-          className="group relative flex items-center justify-center w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-red-500/30 transition-all duration-300 transform hover:scale-110 active:scale-95 z-50"
-        >
+        <button onClick={onToggle} className="group relative flex items-center justify-center w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-red-500/30 transition-all duration-300 transform hover:scale-110 active:scale-95 z-50">
           <div className="absolute -top-3 -right-3">
              <span className="relative flex h-5 w-5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -407,9 +376,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
             </span>
           </div>
           <MessageSquare size={32} className="group-hover:rotate-12 transition-transform duration-300" />
-          
-           {/* Tooltip */}
-           <span className="absolute right-full mr-4 bg-white text-gray-800 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+          <span className="absolute right-full mr-4 bg-white text-gray-800 px-3 py-1.5 rounded-lg shadow-md text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             {isRecruiter ? 'Chat với Admin' : 'Chat với chúng tôi'}
              <div className="absolute top-1/2 -right-1 w-2 h-2 bg-white transform -translate-y-1/2 rotate-45"></div>
           </span>

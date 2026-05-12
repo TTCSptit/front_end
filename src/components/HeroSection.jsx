@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -16,23 +17,58 @@ const HeroSection = () => {
     navigate(`/jobs?${params.toString()}`);
   };
 
-  return (
-    <section className="relative bg-gradient-to-r from-ptit-red to-red-600 min-h-[500px] flex items-center justify-center -mt-20 pt-20">
-      {/* Background pattern overlay could go here */}
-      <div className="absolute inset-0 bg-[url('https://ptit.edu.vn/wp-content/uploads/2021/07/bg-header.png')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
-      
-      <div className="container mx-auto px-4 relative z-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight animate-fade-in-up">
-          Cổng thông tin Việc làm & <br/> Thực tập PTIT
-        </h1>
-        <p className="text-red-100 text-lg mb-10 max-w-2xl mx-auto font-light animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          Kết nối sinh viên Học viện Công nghệ Bưu chính Viễn thông với hàng ngàn cơ hội nghề nghiệp từ các doanh nghiệp hàng đầu.
-        </p>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
 
-        {/* Search Box */}
-        <div className="bg-white p-3 rounded-xl shadow-2xl max-w-4xl mx-auto transform translate-y-8 flex flex-col md:flex-row gap-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-lg focus-within:ring-2 focus-within:ring-red-100 transition-shadow">
-             <Search className="text-gray-400 mr-3 shrink-0" />
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  return (
+    <section className="relative bg-gradient-to-r from-ptit-red to-red-600 min-h-[500px] flex items-center justify-center -mt-20 pt-20 overflow-hidden">
+      {/* Background pattern overlay */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.1 }}
+        transition={{ duration: 1 }}
+        className="absolute inset-0 bg-[url('https://ptit.edu.vn/wp-content/uploads/2021/07/bg-header.png')] bg-cover bg-center mix-blend-overlay"
+      ></motion.div>
+      
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="container mx-auto px-4 relative z-10 text-center"
+      >
+        <motion.h1 
+          variants={itemVariants}
+          className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight font-heading drop-shadow-sm"
+        >
+          Cổng thông tin Việc làm & <br/> Thực tập PTIT
+        </motion.h1>
+        <motion.p 
+          variants={itemVariants}
+          className="text-red-50 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light leading-relaxed"
+        >
+          Kết nối sinh viên Học viện Công nghệ Bưu chính Viễn thông với hàng ngàn cơ hội nghề nghiệp từ các doanh nghiệp hàng đầu.
+        </motion.p>
+
+        {/* Search Box with Deep Glassmorphism */}
+        <motion.div 
+          variants={itemVariants}
+          className="bg-white/90 backdrop-blur-xl p-2 rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] max-w-5xl mx-auto transform translate-y-8 flex flex-col md:flex-row gap-2 border border-white/40 focus-within:ring-4 focus-within:ring-red-500/10 transition-all duration-500"
+        >
+          <div className="flex-[1.5] flex items-center px-5 py-4 bg-gray-50/50 rounded-xl focus-within:bg-white focus-within:shadow-inner transition-all group">
+             <Search className="text-gray-400 mr-3 shrink-0 group-focus-within:text-ptit-red group-focus-within:scale-110 transition-all" size={20} />
              <input 
                type="text" 
                placeholder="Tìm kiếm việc làm, công ty..." 
@@ -73,14 +109,16 @@ const HeroSection = () => {
              </select>
           </div>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleSearch}
-            className="bg-ptit-red text-white font-bold py-3 px-8 rounded-lg hover:bg-ptit-darkred transition-all shadow-lg shadow-red-200 whitespace-nowrap active:scale-95"
+            className="bg-ptit-red text-white font-bold py-3 px-8 rounded-lg hover:bg-ptit-darkred transition-all shadow-lg shadow-red-200 whitespace-nowrap"
           >
             Tìm kiếm
-          </button>
-        </div>
-      </div>
+          </motion.button>
+        </motion.div>
+      </motion.div>
       
       {/* Decorative wave at bottom */}
       <div className="absolute bottom-0 left-0 right-0">

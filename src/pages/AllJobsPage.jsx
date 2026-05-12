@@ -25,7 +25,10 @@ const AllJobsPage = () => {
         categoryName: searchParams.get('industry')
       };
       const jobData = await getJobs(filters);
-      setJobs(jobData.items || jobData || []);
+      const items = jobData.items || jobData || [];
+      // Filter out expired jobs
+      const activeJobs = items.filter(job => !job.deadline || new Date(job.deadline) >= new Date());
+      setJobs(activeJobs);
       
       const catData = await getCategories();
       setCategories(catData || []);

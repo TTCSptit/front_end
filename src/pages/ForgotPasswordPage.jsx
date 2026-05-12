@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, KeyRound, Lock, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, Building2, Users, TrendingUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { forgotPassword, verifyOtp, resetPassword } from '../services/api';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -9,11 +10,21 @@ const ForgotPasswordPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleEmailSubmit = (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    console.log('Requesting reset for:', email);
-    setStep(2);
+    setError('');
+    setLoading(true);
+    try {
+      await forgotPassword(email);
+      setStep(2);
+    } catch (err) {
+      setError(err.message || 'Không thể gửi yêu cầu. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -29,20 +40,50 @@ const ForgotPasswordPage = () => {
     }
   };
 
-  const handleOtpSubmit = (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    console.log('Verifying OTP:', otp.join(''));
-    setStep(3);
-  };
-
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      alert('Mật khẩu không khớp!');
+    const otpCode = otp.join('');
+    if (otpCode.length < 6) {
+      setError('Vui lòng nhập đủ 6 chữ số.');
       return;
     }
-    console.log('Setting new password:', newPassword);
-    setStep(4);
+    setError('');
+    setLoading(true);
+    try {
+      await verifyOtp(email, otpCode);
+      setStep(3);
+    } catch (err) {
+      setError(err.message || 'Mã xác thực không chính xác hoặc đã hết hạn.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp!');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+    try {
+      await resetPassword({
+        email,
+        otp: otp.join(''),
+        newPassword
+      });
+      setStep(4);
+    } catch (err) {
+      setError(err.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -147,6 +188,12 @@ const ForgotPasswordPage = () => {
                 <p className="text-gray-500">Mật khẩu của bạn đã được cập nhật thành công.</p>
               </div>
             )}
+
+            {error && (
+              <div className="mt-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 animate-shake">
+                {error}
+              </div>
+            )}
           </div>
 
           {/* Form Step 1: Email */}
@@ -168,10 +215,11 @@ const ForgotPasswordPage = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Tiếp tục
-                <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
+                {loading ? 'Đang gửi...' : 'Tiếp tục'}
+                {!loading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
               </button>
             </form>
           )}
@@ -200,10 +248,11 @@ const ForgotPasswordPage = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Xác nhận mã
-                <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
+                {loading ? 'Đang xác thực...' : 'Xác nhận mã'}
+                {!loading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
               </button>
             </form>
           )}
@@ -241,9 +290,10 @@ const ForgotPasswordPage = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-xl font-bold hover:from-red-700 hover:to-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 group text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Cập nhật mật khẩu
+                {loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
               </button>
             </form>
           )}

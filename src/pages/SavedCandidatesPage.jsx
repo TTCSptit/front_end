@@ -1,42 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, Search, Filter, Users, Mail, Phone, 
   MapPin, Briefcase, Trash2, MessageSquare, Download,
   Star
 } from 'lucide-react';
+import { getSavedCandidates, unsaveCandidate, downloadProtectedFile } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const SavedCandidatesPage = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock data
-  const [candidates, setCandidates] = useState([
-    {
-      id: 1,
-      name: 'Nguyễn Văn An',
-      role: 'Senior Frontend Developer',
-      location: 'Hà Nội',
-      experience: '4 năm',
-      email: 'an.nv@example.com',
-      phone: '0901 234 567',
-      savedAt: '2026-02-05'
-    },
-    {
-      id: 2,
-      name: 'Lê Thị Bình',
-      role: 'UI/UX Designer',
-      location: 'TP. HCM',
-      experience: '2 năm',
-      email: 'binh.lt@example.com',
-      phone: '0912 345 678',
-      savedAt: '2026-02-01'
-    }
-  ]);
+  // Load from API
+  const [candidates, setCandidates] = useState([]);
 
-  const removeCandidate = (id) => {
+  useEffect(() => {
+    const fetchSaved = async () => {
+      try {
+        const data = await getSavedCandidates();
+        setCandidates(data || []);
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách ứng viên đã lưu.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSaved();
+  }, []);
+
+  const removeCandidate = async (candidateId) => {
     if (window.confirm('Bạn có chắc muốn bỏ lưu ứng viên này?')) {
-      setCandidates(candidates.filter(c => c.id !== id));
+      try {
+        await unsaveCandidate(candidateId);
+        setCandidates(prev => prev.filter(c => c.candidateId !== candidateId));
+      } catch (err) {
+        alert('Thao tác thất bại: ' + err.message);
+      }
     }
+  };
+
+  const handleDownloadCV = (candidate) => {
+    if (!candidate.cvUrl) {
+      alert('Ứng viên này chưa cập nhật CV.');
+      return;
+    }
+    // Sử dụng endpoint download CV từ Applications hoặc Resumes tùy theo backend cấu trúc
+    // Ở đây ta giả định có endpoint tải CV qua filename hoặc tương đương
+    const downloadUrl = `https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api/Resumes/download-by-filename/${candidate.cvUrl}`;
+    downloadProtectedFile(downloadUrl, `CV_${candidate.fullName}.pdf`);
+  };
+
+  const handleContact = (candidateId) => {
+    navigate(`/recruiter/messages?contactId=${candidateId}`);
   };
 
   return (
@@ -75,15 +93,23 @@ const SavedCandidatesPage = () => {
 
         {/* Candidates List */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {candidates.length > 0 ? (
-            candidates.map((candidate) => (
+          {candidates.filter(c => 
+            c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            c.role.toLowerCase().includes(searchTerm.toLowerCase())
+          ).length > 0 ? (
+            candidates
+              .filter(c => 
+                c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                c.role.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((candidate) => (
               <div key={candidate.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition group">
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-400 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-red-100">
-                    {candidate.name.charAt(0)}
+                    {candidate.fullName.charAt(0)}
                   </div>
                   <button 
-                    onClick={() => removeCandidate(candidate.id)}
+                    onClick={() => removeCandidate(candidate.candidateId)}
                     className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition"
                     title="Bỏ lưu"
                   >
@@ -92,7 +118,7 @@ const SavedCandidatesPage = () => {
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-ptit-red transition">{candidate.name}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-ptit-red transition">{candidate.fullName}</h3>
                   <div className="text-ptit-red font-medium text-sm">{candidate.role}</div>
                 </div>
 
@@ -112,11 +138,17 @@ const SavedCandidatesPage = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                  <button className="flex items-center justify-center gap-2 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition">
+                  <button 
+                    onClick={() => handleDownloadCV(candidate)}
+                    className="flex items-center justify-center gap-2 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition"
+                  >
                     <Download size={16} />
                     Tải CV
                   </button>
-                  <button className="flex items-center justify-center gap-2 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition">
+                  <button 
+                    onClick={() => handleContact(candidate.candidateId)}
+                    className="flex items-center justify-center gap-2 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition"
+                  >
                     <MessageSquare size={16} />
                     Liên hệ
                   </button>

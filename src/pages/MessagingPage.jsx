@@ -120,86 +120,106 @@ const MessagingPage = ({ role }) => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 p-4 md:p-6 lg:p-8">
-      <div className="container mx-auto h-[750px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex ring-1 ring-black/5">
-        
+    <div className="min-h-[calc(100vh-80px)] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-50 via-slate-50 to-blue-50 p-4 md:p-6 lg:p-10 font-sans">
+      <div className="container mx-auto h-[800px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden border border-white/60 flex relative">
         {/* Sidebar */}
-        <div className="w-full md:w-[350px] lg:w-[400px] border-r border-gray-100 flex flex-col bg-white">
-          <div className="p-6 pb-4">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Messages</h1>
+        <div className="w-full md:w-[380px] lg:w-[420px] border-r border-white/40 flex flex-col bg-white/40 relative z-10">
+          <div className="p-8 pb-4">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight font-heading">Messages</h1>
             </div>
             
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-ptit-red transition-colors" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-ptit-red transition-all duration-300" size={18} />
               <input 
                 type="text"
                 placeholder="Search conversations..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-red-100 outline-none text-sm font-medium transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-white/80 rounded-2xl border border-gray-100 focus:border-red-200 focus:ring-4 focus:ring-red-50/50 outline-none text-sm font-medium transition-all shadow-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-8 space-y-2 mt-4">
             {conversations
               .filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => setActiveId(chat.id)}
-                className={`w-full p-4 flex gap-4 transition-all duration-300 relative ${
-                  String(activeId) === String(chat.id) 
-                    ? 'bg-red-50/50 after:absolute after:left-0 after:top-0 after:bottom-0 after:w-1 after:bg-ptit-red' 
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="relative">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-red-100 bg-gradient-to-br ${
-                    String(chat.id).length > 5 ? 'from-ptit-red to-red-400' : 'from-gray-700 to-gray-500'
-                  }`}>
-                    {chat.avatar}
-                  </div>
-                </div>
-                
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className={`font-bold text-gray-900 truncate ${String(activeId) === String(chat.id) ? 'text-ptit-red' : ''}`}>
-                      {chat.name}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-500 truncate font-medium">
-                    {chat.lastMessage}
-                  </p>
-                </div>
-              </button>
-            ))}
+              .map((chat) => {
+                const isActive = String(activeId) === String(chat.id);
+                return (
+                  <button
+                    key={chat.id}
+                    onClick={() => setActiveId(chat.id)}
+                    className={`w-full p-4 flex gap-4 rounded-3xl transition-all duration-500 relative group ${
+                      isActive 
+                        ? 'bg-white shadow-[0_10px_40px_-10px_rgba(239,68,68,0.15)] border border-red-50/50' 
+                        : 'hover:bg-white/60 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="relative shrink-0">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg bg-gradient-to-br transition-transform duration-500 group-hover:scale-105 ${
+                        isActive ? 'from-ptit-red to-red-400 shadow-red-200' : 'from-gray-700 to-gray-500 shadow-gray-200'
+                      }`}>
+                        {chat.avatar}
+                      </div>
+                      {chat.online && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-white rounded-full"></div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 text-left min-w-0 flex flex-col justify-center">
+                      <div className="flex justify-between items-center mb-1">
+                        <h3 className={`font-bold text-gray-900 truncate font-heading transition-colors ${isActive ? 'text-ptit-red' : ''}`}>
+                          {chat.name}
+                        </h3>
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">
+                          {chat.time || 'NOW'}
+                        </span>
+                      </div>
+                      <p className={`text-xs truncate font-medium ${isActive ? 'text-gray-600' : 'text-gray-400'}`}>
+                        {chat.lastMessage}
+                      </p>
+                    </div>
+                    {isActive && (
+                      <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-10 bg-ptit-red rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]"></div>
+                    )}
+                  </button>
+                );
+              })}
           </div>
         </div>
 
         {/* Chat Window */}
-        <div className="hidden md:flex flex-1 flex-col bg-gray-50/30">
+        <div className="hidden md:flex flex-1 flex-col bg-transparent relative z-10">
           {!activeChat ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                <MessageSquare size={40} />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 space-y-6">
+              <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-xl flex items-center justify-center text-ptit-red border border-gray-50 animate-bounce-slow">
+                <MessageSquare size={50} />
               </div>
-              <p className="font-medium">Chọn một cuộc trò chuyện để bắt đầu</p>
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 font-heading mb-2">Your Conversations</h2>
+                <p className="text-gray-400 max-w-xs mx-auto text-sm leading-relaxed">Select a candidate or recruiter from the left to start a professional conversation.</p>
+              </div>
+              <button className="px-8 py-3 bg-white text-gray-600 font-bold rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95">
+                New Message
+              </button>
             </div>
           ) : (
             <>
               {/* Top Bar */}
-              <div className="h-24 bg-white border-b border-gray-100 px-8 flex items-center justify-between shadow-sm z-10">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-md bg-gradient-to-br ${
-                    String(activeChat.id).length > 5 ? 'from-ptit-red to-red-400' : 'from-gray-700 to-gray-500'
+              <div className="h-28 bg-white/60 backdrop-blur-md border-b border-white/50 px-10 flex items-center justify-between z-20">
+                <div className="flex items-center gap-5">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg bg-gradient-to-br ${
+                    String(activeChat.id).length > 5 ? 'from-ptit-red to-red-400 shadow-red-100' : 'from-gray-700 to-gray-500 shadow-gray-200'
                   }`}>
                     {activeChat.avatar}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{activeChat.name}</h3>
-                    <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Online</span>
+                    <h3 className="font-bold text-gray-900 text-xl font-heading leading-tight">{activeChat.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Now</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -207,30 +227,39 @@ const MessagingPage = ({ role }) => {
               {/* Messages Area */}
               <div 
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"
+                className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar bg-slate-50/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px]"
               >
                 {messages.map((msg, index) => {
                   const myEmail = sessionStorage.getItem('userEmail');
                   const myId = sessionStorage.getItem('userId');
-                  // Ưu tiên so sánh senderEmail (từ DTO mới), fallback sang senderId
                   const finalIsMine = myEmail 
                     ? msg.senderEmail === myEmail 
                     : myId 
                       ? String(msg.senderId) === String(myId)
                       : String(msg.senderId) !== String(activeId);
+                  
+                  const showTime = true; // Could optimize to show only if time difference is large
+
                   return (
                     <div key={msg.id} className={`flex ${finalIsMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
-                      <div className={`max-w-[70%] group ${finalIsMine ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
-                        <div className={`relative px-6 py-4 rounded-3xl text-sm leading-relaxed shadow-sm ${
+                      <div className={`max-w-[75%] group ${finalIsMine ? 'items-end' : 'items-start'} flex flex-col gap-3`}>
+                        <div className={`relative px-7 py-4 rounded-[2rem] text-[15px] leading-relaxed shadow-md transition-all group-hover:shadow-lg ${
                           finalIsMine 
-                            ? 'bg-ptit-red text-white rounded-tr-none' 
-                            : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                            ? 'bg-gradient-to-br from-ptit-red to-red-500 text-white rounded-tr-none shadow-red-100' 
+                            : 'bg-white text-gray-700 border border-gray-100 rounded-tl-none shadow-gray-100'
                         }`}>
                           {msg.message}
+                          {finalIsMine && (
+                            <div className="absolute bottom-1 right-2 text-[10px] text-white/50">
+                              <CheckCheck size={12} />
+                            </div>
+                          )}
                         </div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        {showTime && (
+                          <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-2">
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -238,24 +267,26 @@ const MessagingPage = ({ role }) => {
               </div>
 
               {/* Input Area */}
-              <div className="p-8 bg-white border-t border-gray-100">
+              <div className="p-8 bg-white/60 backdrop-blur-md border-t border-white/50">
                 <form onSubmit={handleSend} className="flex items-center gap-4">
                   <div className="flex-1 relative group">
                     <input 
                       type="text"
-                      placeholder="Type your message here..."
-                      className="w-full pl-6 pr-14 py-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-red-100 outline-none text-sm font-medium transition-all"
+                      placeholder="Write your message..."
+                      className="w-full pl-6 pr-16 py-5 bg-white rounded-3xl border border-gray-100 focus:border-red-200 focus:ring-8 focus:ring-red-50/30 outline-none text-[15px] font-medium transition-all shadow-sm"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                     />
                     <button 
                       type="submit"
                       disabled={!message.trim()}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-xl transition-all ${
-                        message.trim() ? 'bg-ptit-red text-white shadow-lg shadow-red-100' : 'text-gray-300'
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 p-4 rounded-2xl transition-all active:scale-90 ${
+                        message.trim() 
+                          ? 'bg-ptit-red text-white shadow-xl shadow-red-200' 
+                          : 'bg-gray-100 text-gray-300'
                       }`}
                     >
-                      <Send size={18} />
+                      <Send size={20} />
                     </button>
                   </div>
                 </form>

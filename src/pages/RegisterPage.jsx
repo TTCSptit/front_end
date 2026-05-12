@@ -130,7 +130,6 @@ const RegisterPage = () => {
           {/* Welcome Text */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-green-100 text-green-600 px-4 py-2 rounded-full text-sm font-medium mb-4">
-              <Sparkles size={16} />
               Tạo tài khoản mới
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Đăng ký</h2>
@@ -289,25 +288,6 @@ const RegisterPage = () => {
               {!loading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="text-gray-400 text-sm">hoặc</span>
-            <div className="flex-1 h-px bg-gray-200"></div>
-          </div>
-
-          {/* Social Register */}
-          <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition font-medium text-gray-700">
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-              Google
-            </button>
-            <button className="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition font-medium text-gray-700">
-              <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-5 h-5" />
-              Facebook
-            </button>
-          </div>
 
           {/* Login Link */}
           <div className="mt-8 text-center text-gray-500">

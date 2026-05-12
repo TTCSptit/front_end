@@ -4,6 +4,13 @@
 // ============================================================
 
 const BASE_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api';
+const SERVER_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net';
+
+export const getMediaUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return `${SERVER_URL}${path}`;
+};
 
 // Helper: lấy token từ sessionStorage
 const getToken = () => sessionStorage.getItem('token');
@@ -122,6 +129,27 @@ export const loginGoogle = async (idToken, role) => {
   return data.data;
 };
 
+export const forgotPassword = async (email) => {
+  return await apiFetch('/Auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+};
+
+export const verifyOtp = async (email, otp) => {
+  return await apiFetch('/Auth/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp }),
+  });
+};
+
+export const resetPassword = async (dto) => {
+  return await apiFetch('/Auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+};
+
 // JOBS
 export const getJobs = async (filters = {}) => {
   const params = new URLSearchParams(
@@ -213,6 +241,20 @@ export const updateCompany = async (id, dto) => {
     method: 'PUT',
     body: JSON.stringify(dto),
   });
+};
+
+export const uploadCompanyLogo = async (id, file) => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('logo', file);
+  const response = await fetch(`${BASE_URL}/Companies/${id}/upload-logo`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || 'Upload Logo failed');
+  return data.data;
 };
 
 // PROFILES
@@ -316,6 +358,27 @@ export const setMainUserResume = async (id) => {
 };
 
 export const getUserResumeDownloadUrl = (id) => `${BASE_URL}/Resumes/${id}/download`;
+
+// SAVED CANDIDATES
+export const getSavedCandidates = async () => {
+  const data = await apiFetch('/SavedCandidates');
+  return data.data;
+};
+
+export const saveCandidate = async (candidateId, note = '') => {
+  const data = await apiFetch('/SavedCandidates', {
+    method: 'POST',
+    body: JSON.stringify({ candidateId, note }),
+  });
+  return data;
+};
+
+export const unsaveCandidate = async (candidateId) => {
+  const data = await apiFetch(`/SavedCandidates/${candidateId}`, {
+    method: 'DELETE',
+  });
+  return data;
+};
 
 // STATS
 export const getMarketSummary = async () => {

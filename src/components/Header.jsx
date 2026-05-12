@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Menu, X, User, Briefcase, Plus, LogOut, MessageSquare } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -11,35 +13,50 @@ const Header = () => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
   const userRole = sessionStorage.getItem('userRole');
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('userEmail'); // Make sure to remove email as well!
+    sessionStorage.removeItem('userEmail');
     window.dispatchEvent(new Event('authChange'));
     navigate('/login');
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
+    <header className={`sticky top-0 z-50 transition-all duration-500 ${
+      isScrolled 
+        ? 'glass-card shadow-[0_8px_32px_rgba(0,0,0,0.05)] h-16' 
+        : 'bg-white h-20'
+    }`}>
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex justify-between items-center h-full">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/home" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-ptit-red rounded-full flex items-center justify-center text-white font-bold text-xl">
+            <Link to="/home" className="flex items-center gap-2 group">
+              <motion.div 
+                whileHover={{ rotate: 15, scale: 1.1 }}
+                className="w-10 h-10 bg-ptit-red rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-red-200"
+              >
                 P
-              </div>
+              </motion.div>
               <div className="flex flex-col">
-                <span className="text-ptit-red font-bold text-xl leading-none">JOBS</span>
-                <span className="text-gray-600 text-xs font-medium tracking-wider">PTIT.EDU.VN</span>
+                <span className="text-ptit-red font-black text-2xl leading-none group-hover:text-ptit-darkred transition-colors font-heading tracking-tighter">JOBS</span>
+                <span className="text-slate-400 text-[9px] font-black tracking-[0.3em] transition-all uppercase">ptit.edu.vn</span>
               </div>
             </Link>
             {(location.pathname.startsWith('/recruiter') || (isLoggedIn && userRole === 'recruiter')) && (
-              <div className="hidden md:flex items-center gap-3 pl-4">
-                <Link to="/recruiter/dashboard" className="px-5 py-2 border border-gray-300 text-gray-700 text-sm font-bold rounded hover:bg-gray-50 transition">
+              <div className="hidden lg:flex items-center gap-3 pl-6 ml-6 border-l border-gray-100">
+                <Link to="/recruiter/dashboard" className="px-5 py-2 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition-all active:scale-95">
                   Quản lý tin
                 </Link>
-                <Link to="/recruiter/post-job" className="px-5 py-2 bg-ptit-red text-white text-sm font-bold rounded hover:bg-red-700 transition">
+                <Link to="/recruiter/post-job" className="px-5 py-2 bg-ptit-red text-white text-sm font-bold rounded-lg hover:bg-ptit-darkred transition-all shadow-md shadow-red-100 active:scale-95">
                   Đăng tin ngay
                 </Link>
               </div>
@@ -47,7 +64,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6">
             {location.pathname.startsWith('/recruiter') ? (
               <>
                 {location.pathname === '/recruiter' && ['Lý do', 'Hình thức', 'Quy trình', 'Công cụ', 'Hợp tác', 'Tin tức'].map((item) => (
@@ -70,72 +87,84 @@ const Header = () => {
                         window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                       }
                     }}
-                    className="font-medium text-gray-600 hover:text-ptit-red transition-colors"
+                    className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group"
                   >
                     {item}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
                   </button>
                 ))}
               </>
             ) : (
               <>
-                <Link to="/home" className="font-medium text-ptit-red hover:text-ptit-darkred transition-colors">Trang chủ</Link>
+                <Link to="/home" className={`font-semibold transition-all relative group ${location.pathname === '/home' ? 'text-ptit-red' : 'text-gray-600 hover:text-ptit-red'}`}>
+                  Trang chủ
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-ptit-red transition-all ${location.pathname === '/home' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                </Link>
                 {isLoggedIn && userRole === 'candidate' && (
-                  <Link to="/profile" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Trang cá nhân</Link>
+                  <Link to="/profile" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">
+                    Trang cá nhân
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
+                  </Link>
                 )}
-                {isLoggedIn && userRole === 'candidate' && (
-                  <Link to="/manage-cv" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Quản lý CV</Link>
-                )}
-                <Link to="/applied-jobs" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Việc làm đã nộp</Link>
-                <Link to="/industries" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Ngành nghề</Link>
-                <Link to="/cv-templates" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">CV Templates</Link>
-                <Link to="/news" className="font-medium text-gray-600 hover:text-ptit-red transition-colors">Tin tức</Link>
+                <Link to="/applied-jobs" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">
+                  Việc làm đã nộp
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
+                </Link>
+                <Link to="/industries" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">
+                  Ngành nghề
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
+                </Link>
+                <Link to="/cv-templates" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">
+                  CV Templates
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
+                </Link>
+                <Link to="/news" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">
+                  Tin tức
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-ptit-red transition-all group-hover:w-full"></span>
+                </Link>
               </>
             )}
           </nav>
 
           {/* Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-                  <User size={18} className="text-gray-600" />
-                  <span className="text-gray-700 font-medium">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full">
+                  <div className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                    <User size={14} />
+                  </div>
+                  <span className="text-xs text-gray-700 font-bold pr-1">
                     {userRole === 'recruiter' ? 'Nhà tuyển dụng' : 'Ứng viên'}
                   </span>
                 </div>
                 <Link 
                   to={userRole === 'recruiter' ? '/recruiter/messages' : '/messages'} 
-                  className="p-2 text-gray-600 hover:text-ptit-red hover:bg-red-50 rounded-lg transition-all relative"
+                  className="p-2.5 text-gray-600 hover:text-ptit-red hover:bg-red-50 rounded-full transition-all relative active:scale-90"
                   title="Tin nhắn"
                 >
-                  <MessageSquare size={22} />
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-ptit-red rounded-full border-2 border-white"></span>
+                  <MessageSquare size={20} />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-ptit-red rounded-full border-2 border-white"></span>
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                  className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all active:scale-90"
+                  title="Đăng xuất"
                 >
-                  <LogOut size={18} />
-                  Đăng xuất
+                  <LogOut size={20} />
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-ptit-red hover:bg-red-50 rounded-lg transition-colors font-medium">
-                  <User size={18} />
+                <Link to="/login" className="px-4 py-2 text-gray-600 hover:text-ptit-red font-bold text-sm transition-all active:scale-95">
                   Đăng nhập
                 </Link>
-                {location.pathname.startsWith('/recruiter') ? (
-                  <Link to="/home" className="flex items-center gap-2 px-4 py-2 bg-ptit-red text-white rounded-lg hover:bg-ptit-darkred transition-colors font-medium shadow-md shadow-red-100">
-                    <User size={18} />
-                    Ứng viên
-                  </Link>
-                ) : (
-                  <Link to="/recruiter" className="flex items-center gap-2 px-4 py-2 bg-ptit-red text-white rounded-lg hover:bg-ptit-darkred transition-colors font-medium shadow-md shadow-red-100">
-                    <Briefcase size={18} />
-                    Nhà tuyển dụng
-                  </Link>
-                )}
+                <Link 
+                  to={location.pathname.startsWith('/recruiter') ? '/home' : '/recruiter'} 
+                  className="px-5 py-2.5 bg-ptit-red text-white rounded-full hover:bg-ptit-darkred transition-all font-bold text-sm shadow-lg shadow-red-100 active:scale-95"
+                >
+                  {location.pathname.startsWith('/recruiter') ? 'Dành cho Ứng viên' : 'Dành cho Nhà tuyển dụng'}
+                </Link>
               </>
             )}
           </div>
@@ -144,7 +173,7 @@ const Header = () => {
           <div className="md:hidden">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-gray-600 hover:text-ptit-red hover:bg-gray-100 rounded-lg"
+              className="p-2 text-gray-600 hover:text-ptit-red hover:bg-gray-50 rounded-full transition-all"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -153,109 +182,100 @@ const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white">
-          <div className="flex flex-col p-4 space-y-4">
-            {location.pathname.startsWith('/recruiter') ? (
-              <>
-                {location.pathname === '/recruiter' && ['Lý do', 'Hình thức', 'Quy trình', 'Công cụ', 'Hợp tác', 'Tin tức'].map((item) => (
-                  <button 
-                    key={item}
-                    onClick={() => {
-                      const map = {
-                        'Lý do': 'ly-do',
-                        'Hình thức': 'hinh-thuc',
-                        'Quy trình': 'quy-trinh',
-                        'Công cụ': 'cong-cu',
-                        'Hợp tác': 'hop-tac',
-                        'Tin tức': 'tin-tuc'
-                      };
-                      const element = document.getElementById(map[item]);
-                      if (element) {
-                        const offset = 100;
-                        const elementPosition = element.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                        setIsMenuOpen(false);
-                      }
-                    }}
-                    className="font-medium text-gray-600 p-2 text-left border-l-2 border-transparent hover:border-ptit-red transition-all"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </>
-            ) : (
-              <>
-                <Link to="/home" className="font-medium text-ptit-red bg-red-50 p-2 rounded-lg" onClick={() => setIsMenuOpen(false)}>Trang chủ</Link>
-                {isLoggedIn && userRole === 'candidate' && (
-                  <Link to="/profile" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Trang cá nhân</Link>
-                )}
-                {isLoggedIn && userRole === 'candidate' && (
-                  <Link to="/manage-cv" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Quản lý CV</Link>
-                )}
-                <Link to="/applied-jobs" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Việc làm đã nộp</Link>
-                <Link to="/industries" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Ngành nghề</Link>
-                <Link to="/cv-templates" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>CV Templates</Link>
-                <Link to="/news" className="font-medium text-gray-600 p-2" onClick={() => setIsMenuOpen(false)}>Tin tức</Link>
-              </>
-            )}
-            <div className="border-t border-gray-100 my-2 pt-2 flex flex-col gap-3">
-              {isLoggedIn ? (
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-gray-50 bg-white overflow-hidden"
+          >
+            <div className="flex flex-col p-4 space-y-3">
+              {location.pathname.startsWith('/recruiter') ? (
                 <>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg justify-center">
-                    <User size={18} className="text-gray-600" />
-                    <span className="text-gray-700 font-medium">
-                      {userRole === 'recruiter' ? 'Nhà tuyển dụng' : 'Ứng viên'}
-                    </span>
-                  </div>
-                  {userRole === 'recruiter' && (
-                    <Link to="/recruiter/dashboard" className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-200 rounded-lg w-full justify-center font-bold" onClick={() => setIsMenuOpen(false)}>
-                      <Briefcase size={18} />
-                      Quản lý tin
-                    </Link>
-                  )}
-                  <button 
-                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
-                    className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-200 rounded-lg w-full justify-center font-medium"
-                  >
-                    <LogOut size={18} />
-                    Đăng xuất
-                  </button>
+                  {location.pathname === '/recruiter' && ['Lý do', 'Hình thức', 'Quy trình', 'Công cụ', 'Hợp tác', 'Tin tức'].map((item) => (
+                    <button 
+                      key={item}
+                      onClick={() => {
+                        const map = {
+                          'Lý do': 'ly-do',
+                          'Hình thức': 'hinh-thuc',
+                          'Quy trình': 'quy-trinh',
+                          'Công cụ': 'cong-cu',
+                          'Hợp tác': 'hop-tac',
+                          'Tin tức': 'tin-tuc'
+                        };
+                        const element = document.getElementById(map[item]);
+                        if (element) {
+                          const offset = 100;
+                          const elementPosition = element.getBoundingClientRect().top;
+                          const offsetPosition = elementPosition + window.pageYOffset - offset;
+                          window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                          setIsMenuOpen(false);
+                        }
+                      }}
+                      className="font-bold text-gray-600 p-3 text-left hover:bg-gray-50 rounded-xl transition-all"
+                    >
+                      {item}
+                    </button>
+                  ))}
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg w-full justify-center" onClick={() => setIsMenuOpen(false)}>
-                    <User size={18} />
-                    Đăng nhập
-                  </Link>
-                  {location.pathname.startsWith('/recruiter') ? (
-                    <>
-                      <Link to="/recruiter/dashboard" className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-200 rounded-lg w-full justify-center font-bold" onClick={() => setIsMenuOpen(false)}>
-                        <Briefcase size={18} />
-                        Quản lý tin
-                      </Link>
-                      <Link to="/recruiter/post-job" className="flex items-center gap-2 px-4 py-3 bg-ptit-red text-white rounded-lg w-full justify-center font-bold" onClick={() => setIsMenuOpen(false)}>
-                        <Plus size={18} />
-                        Đăng tin ngay
-                      </Link>
-                      <Link to="/home" className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-200 rounded-lg w-full justify-center" onClick={() => setIsMenuOpen(false)}>
-                        <User size={18} />
-                        Ứng viên
-                      </Link>
-                    </>
-                  ) : (
-                    <Link to="/recruiter" className="flex items-center gap-2 px-4 py-2 bg-ptit-red text-white rounded-lg w-full justify-center" onClick={() => setIsMenuOpen(false)}>
-                      <Briefcase size={18} />
-                      Nhà tuyển dụng
-                    </Link>
-                  )}
+                  <Link to="/home" className={`font-bold p-3 rounded-xl ${location.pathname === '/home' ? 'text-ptit-red bg-red-50' : 'text-gray-600 hover:bg-gray-50'}`} onClick={() => setIsMenuOpen(false)}>Trang chủ</Link>
+                  <Link to="/applied-jobs" className="font-bold text-gray-600 p-3 hover:bg-gray-50 rounded-xl" onClick={() => setIsMenuOpen(false)}>Việc làm đã nộp</Link>
+                  <Link to="/industries" className="font-bold text-gray-600 p-3 hover:bg-gray-50 rounded-xl" onClick={() => setIsMenuOpen(false)}>Ngành nghề</Link>
+                  <Link to="/cv-templates" className="font-bold text-gray-600 p-3 hover:bg-gray-50 rounded-xl" onClick={() => setIsMenuOpen(false)}>CV Templates</Link>
+                  <Link to="/news" className="font-bold text-gray-600 p-3 hover:bg-gray-50 rounded-xl" onClick={() => setIsMenuOpen(false)}>Tin tức</Link>
                 </>
               )}
+              
+              <div className="border-t border-gray-50 my-2 pt-4 flex flex-col gap-3">
+                {isLoggedIn ? (
+                  <>
+                    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
+                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-ptit-red shadow-sm">
+                        <User size={20} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 font-medium">Đã đăng nhập với tư cách</span>
+                        <span className="text-sm text-gray-900 font-bold">
+                          {userRole === 'recruiter' ? 'Nhà tuyển dụng' : 'Ứng viên'}
+                        </span>
+                      </div>
+                    </div>
+                    {userRole === 'recruiter' && (
+                      <Link to="/recruiter/dashboard" className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-100 rounded-xl justify-center font-bold text-gray-700" onClick={() => setIsMenuOpen(false)}>
+                        Quản lý tin
+                      </Link>
+                    )}
+                    <button 
+                      onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                      className="flex items-center gap-2 px-4 py-3 text-red-600 bg-red-50 rounded-xl justify-center font-bold"
+                    >
+                      <LogOut size={18} />
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="flex items-center gap-2 px-4 py-3 text-gray-700 border border-gray-100 rounded-xl justify-center font-bold" onClick={() => setIsMenuOpen(false)}>
+                      Đăng nhập
+                    </Link>
+                    <Link 
+                      to={location.pathname.startsWith('/recruiter') ? '/home' : '/recruiter'} 
+                      className="flex items-center gap-2 px-4 py-3 bg-ptit-red text-white rounded-xl justify-center font-bold shadow-lg shadow-red-100" 
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {location.pathname.startsWith('/recruiter') ? 'Dành cho Ứng viên' : 'Dành cho Nhà tuyển dụng'}
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
