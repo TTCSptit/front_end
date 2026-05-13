@@ -131,7 +131,7 @@ const MessageItem = memo(({ msg, onSendMessage }) => {
           </div>
         )}
         <span className={`text-[10px] block mt-1 ${msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'}`}>
-          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {(msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
     </div>
@@ -242,8 +242,7 @@ const ChatBot = ({ isOpen, onToggle }) => {
   const isRecruiter = location.pathname.startsWith('/recruiter');
   const isAuthPage = ['/login', '/register', '/forgot-password', '/'].includes(location.pathname);
 
-  if (isAuthPage || isRecruiter) return null;
-
+  // Tất cả hooks phải được gọi TRƯỚC khi có bất kỳ early return nào (Rules of Hooks)
   const { 
     messages, setMessages, isTyping, setIsTyping, 
     sendMessage, dashboardData, radarData, setCvId 
@@ -261,6 +260,9 @@ const ChatBot = ({ isOpen, onToggle }) => {
     window.addEventListener('open-chatbot', handleOpenChat);
     return () => window.removeEventListener('open-chatbot', handleOpenChat);
   }, [isOpen, onToggle]);
+
+  // Early return SAU tất cả hooks
+  if (isAuthPage || isRecruiter) return null;
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];

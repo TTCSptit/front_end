@@ -4,10 +4,15 @@ import { chatWithAiStream, getAiChatHistory } from '../services/aiService';
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  // Persistence helpers
+  // Persistence helpers — KEY GẮN VỚI USERID để tránh lẫn lịch sử giữa các user
+  const getUserKey = (key) => {
+    const userId = sessionStorage.getItem('userEmail') || 'guest';
+    return `${key}_${userId}`;
+  };
+
   const getStored = (key, fallback) => {
     try {
-      const stored = localStorage.getItem(key);
+      const stored = localStorage.getItem(getUserKey(key));
       return stored ? JSON.parse(stored) : fallback;
     } catch (e) { return fallback; }
   };
@@ -46,10 +51,8 @@ export const ChatProvider = ({ children }) => {
       console.log("Auth changed, reloading history...");
       const userId = sessionStorage.getItem('userEmail');
       if (!userId) {
-        // User logged out, clear local cache
-        localStorage.removeItem('chat_messages');
-        localStorage.removeItem('chat_dashboard');
-        localStorage.removeItem('chat_radar');
+        // User logged out, clear local cache của user đó
+        // Không xóa tất cả vì có thể có nhiều user trên cùng trình duyệt
         setMessages([]);
         setDashboardData({
           candidate_info: { name: "Chưa rõ", email: "Chưa rõ" },
@@ -67,8 +70,10 @@ export const ChatProvider = ({ children }) => {
             pointBackgroundColor: '#ef4444',
           }]
         });
+      } else {
+        // User vừa đăng nhập → load lịch sử của chính họ
+        loadHistory();
       }
-      loadHistory();
     };
 
     window.addEventListener('authChange', handleAuthChange);
@@ -78,17 +83,17 @@ export const ChatProvider = ({ children }) => {
     };
   }, []);
 
-  // Persist to localStorage whenever data changes
+  // Persist to localStorage whenever data changes — LƯU THEO KEY CỦA USER
   useEffect(() => {
-    localStorage.setItem('chat_messages', JSON.stringify(messages));
+    localStorage.setItem(getUserKey('chat_messages'), JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
-    localStorage.setItem('chat_dashboard', JSON.stringify(dashboardData));
+    localStorage.setItem(getUserKey('chat_dashboard'), JSON.stringify(dashboardData));
   }, [dashboardData]);
 
   useEffect(() => {
-    localStorage.setItem('chat_radar', JSON.stringify(radarData));
+    localStorage.setItem(getUserKey('chat_radar'), JSON.stringify(radarData));
   }, [radarData]);
 
   const loadHistory = async () => {
