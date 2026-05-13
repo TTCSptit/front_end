@@ -82,12 +82,16 @@ const RegisterPage = () => {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-red-600 font-bold text-2xl shadow-lg">
-              P
+          <div className="flex items-center gap-4 mb-12">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/1/13/Logo_PTIT_University.png" 
+                alt="PTIT Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <div className="text-3xl font-bold">PTIT JOBS</div>
+              <div className="text-3xl font-bold tracking-tight">PTIT JOBS</div>
               <div className="text-white/70 text-sm">Kết nối Tài năng - Kiến tạo Tương lai</div>
             </div>
           </div>
@@ -120,11 +124,15 @@ const RegisterPage = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50 overflow-y-auto">
         <div className="w-full max-w-md py-8">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-              P
+          <div className="lg:hidden flex items-center justify-center gap-4 mb-8">
+            <div className="w-14 h-14 flex items-center justify-center">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/1/13/Logo_PTIT_University.png" 
+                alt="PTIT Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="text-2xl font-bold text-gray-900">PTIT JOBS</div>
+            <div className="text-2xl font-bold text-gray-900 tracking-tight">PTIT JOBS</div>
           </div>
 
           {/* Welcome Text */}

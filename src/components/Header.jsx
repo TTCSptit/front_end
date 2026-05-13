@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, X, User, Briefcase, Plus, LogOut, MessageSquare } from 'lucide-react';
+import { Search, Menu, X, User, Briefcase, Plus, LogOut, MessageSquare, Zap } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,6 +8,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [isNeonMode, setIsNeonMode] = useState(localStorage.getItem('neonMode') === 'true');
   
   // Check login state from sessionStorage
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -20,6 +21,15 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (isNeonMode) {
+      document.documentElement.classList.add('neon-mode');
+    } else {
+      document.documentElement.classList.remove('neon-mode');
+    }
+    localStorage.setItem('neonMode', isNeonMode);
+  }, [isNeonMode]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn');
@@ -39,16 +49,34 @@ const Header = () => {
         <div className="flex justify-between items-center h-full">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/home" className="flex items-center gap-2 group">
+            <Link to="/home" className="flex items-center gap-3 group relative">
               <motion.div 
-                whileHover={{ rotate: 15, scale: 1.1 }}
-                className="w-10 h-10 bg-ptit-red rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-red-200"
+                whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+                whileTap={{ scale: 0.9 }}
+                className="w-12 h-12 flex items-center justify-center relative z-10"
               >
-                P
+                <div className="absolute inset-0 bg-ptit-red/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/1/13/Logo_PTIT_University.png" 
+                  alt="PTIT Logo" 
+                  className="w-full h-full object-contain drop-shadow-md"
+                />
               </motion.div>
-              <div className="flex flex-col">
-                <span className="text-ptit-red font-black text-2xl leading-none group-hover:text-ptit-darkred transition-colors font-heading tracking-tighter">JOBS</span>
-                <span className="text-slate-400 text-[9px] font-black tracking-[0.3em] transition-all uppercase">ptit.edu.vn</span>
+              <div className="flex flex-col relative z-10">
+                <span className="text-ptit-red font-black text-2xl leading-none group-hover:text-ptit-darkred transition-colors font-heading tracking-tighter flex items-center relative overflow-hidden">
+                  <span className="relative z-10">JOBS</span>
+                  <motion.span 
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 z-20"
+                  ></motion.span>
+                  <motion.span 
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="ml-1 w-1.5 h-1.5 bg-ptit-red rounded-full shadow-[0_0_8px_rgba(192,9,9,0.6)]"
+                  ></motion.span>
+                </span>
+                <span className="text-slate-400 text-[9px] font-black tracking-[0.3em] transition-all uppercase group-hover:text-ptit-red/60">ptit.edu.vn</span>
               </div>
             </Link>
             {(location.pathname.startsWith('/recruiter') || (isLoggedIn && userRole === 'recruiter')) && (
@@ -128,6 +156,21 @@ const Header = () => {
 
           {/* Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Neon Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsNeonMode(!isNeonMode)}
+              className={`p-2.5 rounded-xl transition-all duration-500 flex items-center justify-center shadow-sm border ${
+                isNeonMode 
+                  ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)]' 
+                  : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-ptit-red hover:border-ptit-red/20'
+              }`}
+              title="Chế độ Neon"
+            >
+              <Zap size={20} className={isNeonMode ? 'fill-yellow-400 animate-pulse' : ''} />
+            </motion.button>
+
             {isLoggedIn ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full">
@@ -170,7 +213,17 @@ const Header = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setIsNeonMode(!isNeonMode)}
+              className={`p-2 rounded-full transition-all duration-500 ${
+                isNeonMode 
+                  ? 'bg-yellow-400/20 text-yellow-400' 
+                  : 'bg-gray-50 text-gray-400'
+              }`}
+            >
+              <Zap size={20} className={isNeonMode ? 'fill-yellow-400 animate-pulse' : ''} />
+            </button>
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 text-gray-600 hover:text-ptit-red hover:bg-gray-50 rounded-full transition-all"

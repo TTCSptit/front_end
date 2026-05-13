@@ -95,12 +95,16 @@ const ForgotPasswordPage = () => {
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-white/10 rounded-full translate-x-1/3 translate-y-1/3"></div>
         
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-red-600 font-bold text-2xl shadow-lg">
-              P
+          <div className="flex items-center gap-4 mb-12">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/1/13/Logo_PTIT_University.png" 
+                alt="PTIT Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <div className="text-3xl font-bold">PTIT JOBS</div>
+              <div className="text-3xl font-bold tracking-tight">PTIT JOBS</div>
               <div className="text-white/70 text-sm">Kết nối Tài năng - Kiến tạo Tương lai</div>
             </div>
           </div>
