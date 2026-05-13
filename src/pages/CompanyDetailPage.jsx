@@ -5,11 +5,12 @@ import {
   Play, Instagram, Linkedin, Facebook, Twitter, Smartphone, ExternalLink,
   MessageSquare, UserCheck, FileText, Send, Crown
 } from 'lucide-react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCompany, getJobs } from '../services/api';
 
 const CompanyDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -132,6 +133,13 @@ const CompanyDetailPage = () => {
             <button className={`bg-${theme.primary} hover:opacity-90 text-white font-black py-5 px-12 rounded-[1.5rem] transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] flex items-center justify-center gap-3 group active:scale-95`}>
               <Star size={22} className="group-hover:fill-current group-hover:rotate-12 transition-transform" />
               Theo dõi công ty
+            </button>
+            <button 
+              onClick={() => navigate(`/messages?contactId=${company.ownerUserId}`)}
+              className="bg-gray-950 hover:bg-gray-800 text-white font-black py-4 px-12 rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 group active:scale-95"
+            >
+              <MessageSquare size={20} />
+              Nhắn tin NTD
             </button>
             <div className="flex gap-3">
                 <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">

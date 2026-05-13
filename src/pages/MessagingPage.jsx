@@ -25,7 +25,8 @@ const MessagingPage = ({ role }) => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const data = await getConversations(); console.log('DEBUG_DATA:', data); const contactIdFromUrl = searchParams.get('contact'); console.log('DEBUG_URL_ID:', contactIdFromUrl);
+        const data = await getConversations(); 
+        const contactIdFromUrl = searchParams.get('contactId') || searchParams.get('contact'); 
         if (data && Array.isArray(data)) {
           const mapped = data.map(c => ({
             ...c,
@@ -36,7 +37,7 @@ const MessagingPage = ({ role }) => {
           setConversations(mapped);
           
           // Xử lý contact từ URL ngay sau khi load xong danh sách
-          const contactId = searchParams.get('contact');
+          const contactId = searchParams.get('contactId') || searchParams.get('contact');
           if (contactId) {
             const existing = mapped.find(c => String(c.id) === String(contactId));
             if (existing) {
@@ -44,7 +45,7 @@ const MessagingPage = ({ role }) => {
             } else {
               const newTemp = {
                 id: contactId,
-                name: "Ứng viên mới",
+                name: role === 'recruiter' ? "Ứng viên mới" : "Nhà tuyển dụng",
                 avatar: "C",
                 lastMessage: "Bắt đầu nhắn tin...",
                 time: "Now",

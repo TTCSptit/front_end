@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, DollarSign, Clock, Building2, ChevronLeft, CheckCircle, Share2, Briefcase, Calendar, Upload, ArrowRight, AlertCircle, XCircle } from 'lucide-react';
-import { useParams, Link } from 'react-router-dom';
+import { MapPin, DollarSign, Clock, Building2, ChevronLeft, CheckCircle, Share2, Briefcase, Calendar, Upload, ArrowRight, AlertCircle, XCircle, MessageSquare } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getJob, applyJob } from '../services/api';
 
 const JobDetailPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -168,6 +169,14 @@ const JobDetailPage = () => {
                             <button className="w-full mt-6 bg-gray-50 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 active:scale-95">
                                 <Share2 size={18} />
                                 Chia sẻ tin tuyển dụng
+                            </button>
+
+                            <button 
+                                onClick={() => navigate(`/messages?contactId=${job.recruiterId}`)}
+                                className="w-full mt-3 bg-gray-900 text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                            >
+                                <MessageSquare size={18} />
+                                Nhắn tin với NTD
                             </button>
                         </div>
                     </div>
