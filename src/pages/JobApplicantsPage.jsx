@@ -318,7 +318,7 @@ const JobApplicantsPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 mt-2">
                     <button 
-                      onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}`)}
+                      onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}&name=${encodeURIComponent(selectedApplicant.fullName)}`)}
                       className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md"
                     >
                       <MessageSquare size={18} />

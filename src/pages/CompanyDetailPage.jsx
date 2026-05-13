@@ -135,7 +135,7 @@ const CompanyDetailPage = () => {
               Theo dõi công ty
             </button>
             <button 
-              onClick={() => navigate(`/messages?contactId=${company.ownerUserId}`)}
+              onClick={() => navigate(`/messages?contactId=${company.ownerUserId}&name=${encodeURIComponent(company.name)}`)}
               className="bg-gray-950 hover:bg-gray-800 text-white font-black py-4 px-12 rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 group active:scale-95"
             >
               <MessageSquare size={20} />

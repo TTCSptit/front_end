@@ -38,6 +38,7 @@ const MessagingPage = ({ role }) => {
           
           // Xử lý contact từ URL ngay sau khi load xong danh sách
           const contactId = searchParams.get('contactId') || searchParams.get('contact');
+          const contactName = searchParams.get('name');
           if (contactId) {
             const existing = mapped.find(c => String(c.id) === String(contactId));
             if (existing) {
@@ -45,8 +46,8 @@ const MessagingPage = ({ role }) => {
             } else {
               const newTemp = {
                 id: contactId,
-                name: role === 'recruiter' ? "Ứng viên mới" : "Nhà tuyển dụng",
-                avatar: "C",
+                name: contactName || (role === 'recruiter' ? "Ứng viên mới" : "Nhà tuyển dụng"),
+                avatar: (contactName || (role === 'recruiter' ? "U" : "N")).charAt(0),
                 lastMessage: "Bắt đầu nhắn tin...",
                 time: "Now",
                 unread: 0,

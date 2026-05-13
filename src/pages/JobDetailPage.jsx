@@ -172,7 +172,7 @@ const JobDetailPage = () => {
                             </button>
 
                             <button 
-                                onClick={() => navigate(`/messages?contactId=${job.recruiterId}`)}
+                                onClick={() => navigate(`/messages?contactId=${job.recruiterId}&name=${encodeURIComponent(job.companyName)}`)}
                                 className="w-full mt-3 bg-gray-900 text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md"
                             >
                                 <MessageSquare size={18} />

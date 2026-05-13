@@ -159,7 +159,7 @@ const AppliedJobsPage = () => {
                 
                 <div className="flex gap-2">
                     <button 
-                      onClick={() => navigate(`/messages?contactId=${item.jobCardDto.recruiterId}`)}
+                      onClick={() => navigate(`/messages?contactId=${item.jobCardDto.recruiterId}&name=${encodeURIComponent(item.jobCardDto.companyName)}`)}
                       className="w-10 h-10 bg-white text-gray-900 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all shadow-sm active:scale-90"
                       title="Nhắn tin với NTD"
                     >
