@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { getMyProfile, updateProfile, uploadCv, getMyCvUrl } from '../services/api';
+import { getMyProfile, updateProfile, uploadCv, getMyCvUrl, uploadAvatar, getMediaUrl } from '../services/api';
 
 const CandidateProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,6 +14,7 @@ const CandidateProfilePage = () => {
   const [error, setError] = useState('');
   const [cvFile, setCvFile] = useState(null);
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [profile, setProfile] = useState({
     fullName: '',
@@ -26,7 +27,8 @@ const CandidateProfilePage = () => {
     experience: [],
     education: [],
     cvUrl: '',
-    hasCv: false
+    hasCv: false,
+    avatarUrl: ''
   });
 
   const fetchProfile = async () => {
@@ -55,7 +57,8 @@ const CandidateProfilePage = () => {
           period: `${edu.startDate ? edu.startDate.substring(0, 4) : ''} - ${edu.endDate ? edu.endDate.substring(0, 4) : ''}`
         })),
         cvUrl: data.cvurl || '',
-        hasCv: !!data.cvurl
+        hasCv: !!data.cvurl,
+        avatarUrl: data.avatarUrl || ''
       });
     } catch (err) {
       setError(err.message || 'Không thể tải thông tin hồ sơ.');
@@ -123,6 +126,22 @@ const CandidateProfilePage = () => {
       alert(err.message || 'Tải CV lên thất bại.');
     } finally {
       setUploadingCv(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setUploadingAvatar(true);
+    try {
+      const newUrl = await uploadAvatar(file);
+      setProfile(prev => ({ ...prev, avatarUrl: newUrl }));
+      alert('Tải ảnh đại diện thành công!');
+    } catch (err) {
+      alert(err.message || 'Tải ảnh đại diện thất bại.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -238,14 +257,24 @@ const CandidateProfilePage = () => {
               <div className="px-6 pb-8 -mt-14 text-center relative z-10">
                 <div className="relative inline-block mb-4">
                   <div className="w-28 h-28 rounded-full bg-white p-1.5 shadow-2xl relative overflow-hidden">
-                    <div className="w-full h-full rounded-full bg-red-50 flex items-center justify-center text-ptit-red text-4xl font-black">
-                      {profile.fullName.charAt(0)}
+                    <div className="w-full h-full rounded-full bg-red-50 flex items-center justify-center text-ptit-red text-4xl font-black overflow-hidden">
+                      {profile.avatarUrl ? (
+                        <img src={getMediaUrl(profile.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        profile.fullName.charAt(0)
+                      )}
+                      {uploadingAvatar && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {isEditing && (
-                    <button className="absolute bottom-1 right-1 w-9 h-9 bg-ptit-red text-white rounded-full border-2 border-white flex items-center justify-center shadow-lg hover:bg-ptit-darkred transition-all">
+                    <label className="absolute bottom-1 right-1 w-9 h-9 bg-ptit-red text-white rounded-full border-2 border-white flex items-center justify-center shadow-lg hover:bg-ptit-darkred transition-all cursor-pointer">
+                      <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
                       <Camera size={16} />
-                    </button>
+                    </label>
                   )}
                 </div>
                 

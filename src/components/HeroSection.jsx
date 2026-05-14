@@ -34,10 +34,10 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-[600px] flex items-center justify-center -mt-20 pt-20 overflow-hidden bg-[#c00909]">
+    <section className="relative min-h-[600px] flex items-center justify-center -mt-20 pt-20 overflow-hidden bg-ptit-deep-crimson">
       {/* Dynamic Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-ptit-red via-red-600 to-orange-600"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#a50808] via-ptit-deep-crimson to-[#7a0606]"></div>
         
         {/* Animated Orbs */}
         <motion.div 
@@ -85,20 +85,20 @@ const HeroSection = () => {
           variants={itemVariants}
           className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter font-heading"
         >
-          <span className="inline-block hover:scale-105 transition-transform cursor-default drop-shadow-[0_10px_10px_rgba(0,0,0,0.2)]">Cổng thông tin</span> <br/> 
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-white to-yellow-100 drop-shadow-sm">Việc làm & Thực tập</span>
+          <span className="inline-block hover:scale-105 transition-transform cursor-default drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)]">Cổng thông tin</span> <br/> 
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400/90 via-white to-yellow-300/90 drop-shadow-[0_4px_10px_rgba(192,9,9,0.2)]">Việc làm & Thực tập</span>
         </motion.h1>
         <motion.p 
           variants={itemVariants}
           className="text-white/90 text-lg md:text-2xl mb-14 max-w-3xl mx-auto font-medium leading-relaxed drop-shadow-sm"
         >
-          Hành trình sự nghiệp của sinh viên <span className="text-yellow-300 font-bold underline underline-offset-8 decoration-yellow-300/30">PTIT</span> bắt đầu từ đây.
+          Hành trình sự nghiệp của sinh viên <span className="text-yellow-400 font-bold underline underline-offset-8 decoration-yellow-400/30 drop-shadow-[0_0_10px_rgba(251,191,36,0.2)]">PTIT</span> bắt đầu từ đây.
         </motion.p>
 
         {/* Search Box with Deep Glassmorphism */}
         <motion.div 
           variants={itemVariants}
-          className="bg-white/95 backdrop-blur-2xl p-3 rounded-[2rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.3)] max-w-5xl mx-auto flex flex-col md:flex-row gap-3 border border-white focus-within:ring-8 focus-within:ring-white/20 transition-all duration-700"
+          className="bg-white/95 backdrop-blur-2xl p-3 rounded-[2rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.3)] hover:shadow-[0_50px_110px_-15px_rgba(0,0,0,0.4)] max-w-5xl mx-auto flex flex-col md:flex-row gap-3 border border-white focus-within:ring-8 focus-within:ring-white/20 transition-all duration-700"
         >
           <div className="flex-[1.5] flex items-center px-6 py-5 bg-gray-50/80 rounded-2xl focus-within:bg-white focus-within:shadow-xl transition-all group border border-transparent focus-within:border-red-100">
              <Search className="text-gray-400 mr-4 shrink-0 group-focus-within:text-ptit-red group-focus-within:scale-110 transition-all" size={24} />
@@ -111,6 +111,8 @@ const HeroSection = () => {
                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
              />
           </div>
+
+          <div className="hidden md:block w-px h-10 self-center bg-gray-200/50"></div>
 
           <div className="flex-1 flex items-center px-5 py-4 bg-gray-50/80 rounded-2xl border border-transparent focus-within:border-red-100 focus-within:bg-white focus-within:shadow-xl transition-all group">
              <Briefcase className="text-gray-400 mr-4 shrink-0 group-focus-within:text-ptit-red transition-all" size={20} />
@@ -126,6 +128,8 @@ const HeroSection = () => {
                <option>Kế toán - Kiểm toán</option>
              </select>
           </div>
+
+          <div className="hidden md:block w-px h-10 self-center bg-gray-200/50"></div>
 
           <div className="flex-1 flex items-center px-5 py-4 bg-gray-50/80 rounded-2xl border border-transparent focus-within:border-red-100 focus-within:bg-white focus-within:shadow-xl transition-all group">
              <MapPin className="text-gray-400 mr-4 shrink-0 group-focus-within:text-ptit-red transition-all" size={20} />
@@ -143,12 +147,17 @@ const HeroSection = () => {
           </div>
 
           <motion.button 
-            whileHover={{ scale: 1.05, boxShadow: "0 20px 40px -10px rgba(192,9,9,0.4)" }}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: "0 25px 50px -12px rgba(192,9,9,0.5)",
+              filter: "brightness(0.9)"
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSearch}
-            className="bg-gradient-to-r from-ptit-red to-red-600 text-white font-black py-5 px-10 rounded-2xl hover:from-ptit-darkred hover:to-ptit-red transition-all shadow-xl shadow-red-200 whitespace-nowrap text-lg tracking-wide uppercase"
+            className="bg-gradient-to-r from-ptit-red to-red-700 text-white font-black py-5 px-10 rounded-2xl hover:from-ptit-darkred hover:to-ptit-red transition-all shadow-xl shadow-red-200 whitespace-nowrap text-lg tracking-wide uppercase relative overflow-hidden group/btn"
           >
-            Tìm kiếm ngay
+             <span className="relative z-10">Tìm kiếm ngay</span>
+             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
           </motion.button>
         </motion.div>
       </motion.div>

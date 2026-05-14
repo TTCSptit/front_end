@@ -92,7 +92,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-10">
             {location.pathname.startsWith('/recruiter') ? (
               <>
                 {location.pathname === '/recruiter' && ['Lý do', 'Hình thức', 'Quy trình', 'Công cụ', 'Hợp tác', 'Tin tức'].map((item) => (
@@ -126,7 +126,7 @@ const Header = () => {
               <>
                 <Link to="/home" className={`font-semibold transition-all relative group ${location.pathname === '/home' ? 'text-ptit-red' : 'text-gray-600 hover:text-ptit-red'}`}>
                   Trang chủ
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-ptit-red transition-all ${location.pathname === '/home' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                  <span className={`absolute -bottom-1 left-0 h-1 bg-ptit-darkred transition-all ${location.pathname === '/home' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                 </Link>
                 {isLoggedIn && userRole === 'candidate' && (
                   <Link to="/profile" className="font-semibold text-gray-600 hover:text-ptit-red transition-all relative group">

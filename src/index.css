@@ -4,6 +4,7 @@
 @theme {
   --color-ptit-red: #c00909;
   --color-ptit-darkred: #a30000;
+  --color-ptit-deep-crimson: #950707;
   --font-sans: 'Times New Roman', Times, serif;
   --font-heading: 'Times New Roman', Times, serif;
   
@@ -196,9 +197,10 @@
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
   }
 
   .border-glow {
@@ -214,11 +216,12 @@
     z-index: -1;
     border-radius: inherit;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: all 0.4s ease;
   }
 
   .border-glow:hover::before {
     opacity: 1;
+    box-shadow: 0 0 20px rgba(192, 9, 9, 0.1);
   }
 }
 

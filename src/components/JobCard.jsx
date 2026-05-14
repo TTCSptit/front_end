@@ -30,11 +30,11 @@ const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
           />
         </div>
         <div>
-          <h3 className={`font-bold text-slate-900 ${!isExpired && 'group-hover:text-ptit-red'} transition-colors line-clamp-2 mb-1 font-heading text-lg`}>
+          <h3 className={`font-bold text-slate-900 ${!isExpired && 'group-hover:text-ptit-red'} transition-colors line-clamp-2 mb-1 font-heading text-lg md:text-[1.1rem] leading-snug`}>
             {job.title}
           </h3>
-          <p className="text-gray-500 text-sm font-medium flex items-center gap-1">
-            <Building2 size={14} />
+          <p className="text-gray-500 text-[13px] font-medium flex items-center gap-1.5">
+            <Building2 size={13} className="text-gray-400" />
             {job.companyName}
           </p>
         </div>
@@ -42,33 +42,33 @@ const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
 
       <div className="mt-auto space-y-3">
         <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-          <span className="bg-gray-50 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-            <DollarSign size={12} className="text-green-600" />
+          <span className="bg-emerald-50/60 text-emerald-700 px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border border-emerald-100/50">
+            <DollarSign size={12} className="text-emerald-600" />
             {job.salary || 'Thỏa thuận'}
           </span>
-          <span className="bg-gray-50 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-            <MapPin size={12} className="text-blue-500" />
-            {job.location}
+          <span className="bg-blue-50/60 text-blue-700 px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border border-blue-100/50">
+            <MapPin size={12} className="text-blue-600" />
+            {job.location ? job.location.split(',')[0].trim() : 'Việt Nam'}
           </span>
-          <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${isExpired ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-orange-500'}`}>
-            <Clock size={12} />
-            {isExpired ? 'Hết hạn nộp' : (job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Liên hệ')}
+          <span className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 border ${isExpired ? 'bg-rose-50 text-rose-600 border-rose-100/50' : 'bg-orange-50/60 text-orange-700 border-orange-100/50'}`}>
+            <Clock size={12} className={isExpired ? 'text-rose-600' : 'text-orange-600'} />
+            {isExpired ? 'Hết hạn nộp' : (job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Liên hệ')}
           </span>
         </div>
         
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-5">
             {isExpired ? (
-              <div className="flex-1 py-2 bg-gray-100 text-gray-400 rounded-lg font-bold text-sm flex items-center justify-center cursor-not-allowed">
+              <div className="flex-1 py-2.5 bg-gray-100 text-gray-400 rounded-xl font-bold text-xs flex items-center justify-center cursor-not-allowed">
                 Đã hết hạn
               </div>
             ) : (
-              <Link to={linkTo} className="flex-1 py-2 border border-red-100 text-ptit-red rounded-lg font-medium hover:bg-ptit-red hover:text-white transition-all text-sm flex items-center justify-center shadow-sm hover:shadow-md active:scale-95">
+              <Link to={linkTo} className="flex-1 py-2.5 bg-ptit-red text-white rounded-xl font-bold hover:bg-ptit-darkred transition-all text-xs flex items-center justify-center shadow-md shadow-red-100 active:scale-95 border border-transparent">
                 Ứng tuyển ngay
               </Link>
             )}
             <button 
                 onClick={() => onChatOpen && onChatOpen(job.title)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center justify-center ${isExpired ? 'bg-gray-50 text-gray-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-90'}`}
+                className={`w-11 h-11 rounded-xl font-medium transition-all text-sm flex items-center justify-center shrink-0 ${isExpired ? 'bg-gray-50 text-gray-300' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-ptit-red active:scale-90 border border-transparent hover:border-red-100'}`}
                 title="Chat về job này"
                 disabled={isExpired}
             >

@@ -285,6 +285,20 @@ export const uploadCv = async (file) => {
   return data;
 };
 
+export const uploadAvatar = async (file) => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('avatar', file);
+  const response = await fetch(`${BASE_URL}/Profiles/upload-avatar`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || 'Upload avatar failed');
+  return data.data;
+};
+
 export const getMyCvUrl = () => `${BASE_URL}/Profiles/my-cv`;
 
 // CATEGORIES
