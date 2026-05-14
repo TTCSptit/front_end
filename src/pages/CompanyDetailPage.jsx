@@ -6,7 +6,7 @@ import {
   MessageSquare, UserCheck, FileText, Send, Crown
 } from 'lucide-react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getCompany, getJobs } from '../services/api';
+import { getCompany, getJobs, getMediaUrl } from '../services/api';
 
 const CompanyDetailPage = () => {
   const { id } = useParams();
@@ -98,7 +98,7 @@ const CompanyDetailPage = () => {
         <div className={`bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-8 border border-white/50 flex flex-col md:flex-row items-center md:items-end gap-8 mb-10 transition-all hover:shadow-[0_48px_80px_-24px_rgba(0,0,0,0.15)] ${activePlanId === 'premium' ? 'animate-shine' : ''}`}>
           <div className="w-44 h-44 md:w-56 md:h-56 rounded-[2rem] bg-white p-5 shadow-2xl flex-shrink-0 -mt-20 sm:-mt-28 border-8 transition-all hover:scale-105 duration-700 relative group border-white">
             <img 
-              src={company.logo} 
+              src={getMediaUrl(company.logoUrl || company.logo)} 
               alt={company.name} 
               className="w-full h-full object-contain rounded-2xl grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500"
             />
@@ -111,7 +111,7 @@ const CompanyDetailPage = () => {
                     <theme.icon size={16} /> {theme.badge}
                 </span>
             </div>
-            <p className="text-2xl text-gray-400 font-bold mb-8 italic opacity-80 leading-relaxed font-serif">"{company.slogan}"</p>
+            <p className="text-2xl text-gray-400 font-bold mb-8 italic opacity-80 leading-relaxed font-serif">Thành lập năm: {company.founded}</p>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-4 text-xs">
               <div className="flex items-center gap-3 px-5 py-3 bg-white/50 rounded-2xl text-gray-800 font-black border border-gray-100/50 shadow-sm hover:shadow-md transition-shadow">
@@ -263,7 +263,7 @@ const CompanyDetailPage = () => {
                                 <div className={`${theme.bg} p-4 rounded-2xl text-${theme.primary} group-hover/item:bg-${theme.primary} group-hover/item:text-white transition-all transform group-hover/item:rotate-6 shadow-md shadow-${theme.secondary}-100`}>
                                     <MapPin size={22} />
                                 </div>
-                                <p className="text-gray-900 font-black text-base leading-relaxed tracking-tight">{company.address}</p>
+                                <p className="text-gray-900 font-black text-base leading-relaxed tracking-tight">{company.location}</p>
                             </div>
                         </div>
 

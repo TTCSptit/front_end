@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, DollarSign, Clock, Building2, ChevronLeft, CheckCircle, Share2, Briefcase, Calendar, Upload, ArrowRight, AlertCircle, XCircle, MessageSquare } from 'lucide-react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getJob, applyJob } from '../services/api';
+import { getJob, applyJob, getMediaUrl } from '../services/api';
 
 const JobDetailPage = () => {
     const { id } = useParams();
@@ -144,7 +144,7 @@ const JobDetailPage = () => {
                         {/* Company Summary */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-28">
                             <div className="flex items-center gap-4 mb-4">
-                                <img src={job.companyLogoUrl} alt={job.companyName} className="w-16 h-16 rounded-lg object-contain border border-gray-200 p-1" />
+                                <img src={getMediaUrl(job.companyLogoUrl)} alt={job.companyName} className="w-16 h-16 rounded-lg object-contain border border-gray-200 p-1" />
                                 <div>
                                     <h3 className="font-bold text-gray-900 leading-tight mb-1 font-heading">{job.companyName}</h3>
                                     <Link to={`/company/${job.companyId}`} className="text-sm text-ptit-red hover:underline">Xem trang công ty</Link>

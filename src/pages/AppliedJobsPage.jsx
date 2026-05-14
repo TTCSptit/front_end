@@ -5,7 +5,7 @@ import {
   ArrowRight, Filter, SlidersHorizontal, LayoutGrid, List, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getMyApplications } from '../services/api';
+import { getMyApplications, getMediaUrl } from '../services/api';
 
 const AppliedJobsPage = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
@@ -117,7 +117,7 @@ const AppliedJobsPage = () => {
               {/* Company Logo */}
               <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'mb-6' : ''}`}>
                 <img 
-                  src={item.jobCardDto.companyLogoUrl || 'https://via.placeholder.com/150'} 
+                  src={getMediaUrl(item.jobCardDto.companyLogoUrl) || 'https://via.placeholder.com/150'} 
                   alt={item.jobCardDto.companyName} 
                   className="w-16 h-16 rounded-2xl object-contain border border-gray-50 p-1 group-hover:scale-110 transition-transform" 
                 />

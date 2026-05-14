@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, DollarSign, Clock, Building2, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getMediaUrl } from '../services/api';
 
 const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
   const linkTo = linkType === 'job' ? `/job/${job.id}` : `/company/${job.companyId}`;
@@ -23,7 +24,7 @@ const JobCard = ({ job, onChatOpen, linkType = 'job' }) => {
       <div className="flex items-start gap-4 mb-5">
         <div className={`w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center p-2 shrink-0 border border-gray-100 ${!isExpired && 'group-hover:border-red-100 group-hover:bg-red-50/30'} transition-all duration-300 shadow-sm`}>
           <img
-            src={job.companyLogoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f3f4f6'/%3E%3Crect x='18' y='28' width='28' height='20' rx='2' fill='%23d1d5db'/%3E%3Crect x='24' y='20' width='16' height='10' rx='2' fill='%239ca3af'/%3E%3Crect x='26' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3Crect x='33' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3C/svg%3E"}
+            src={getMediaUrl(job.companyLogoUrl) || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f3f4f6'/%3E%3Crect x='18' y='28' width='28' height='20' rx='2' fill='%23d1d5db'/%3E%3Crect x='24' y='20' width='16' height='10' rx='2' fill='%239ca3af'/%3E%3Crect x='26' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3Crect x='33' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3C/svg%3E"}
             alt={job.companyName}
             className="max-w-full max-h-full object-contain"
             onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23f3f4f6'/%3E%3Crect x='18' y='28' width='28' height='20' rx='2' fill='%23d1d5db'/%3E%3Crect x='24' y='20' width='16' height='10' rx='2' fill='%239ca3af'/%3E%3Crect x='26' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3Crect x='33' y='36' width='5' height='12' fill='%23f3f4f6'/%3E%3C/svg%3E"; }}
