@@ -1,0 +1,487 @@
+:root {
+  --messaging-bg: #111827;
+  --panel-bg: rgba(31, 41, 55, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --accent-red: #ef4444;
+  --message-mine: #ef4444;
+  --message-others: #374151;
+}
+
+.messaging-container {
+  height: calc(100vh - 80px);
+  background: radial-gradient(circle at top right, #1e1b4b, #111827);
+  display: flex;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+.messaging-glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.messaging-sidebar {
+  width: 380px;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 2rem;
+}
+
+.sidebar-header h1 {
+  font-size: 1.875rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.search-wrapper {
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  color: white;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-red);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1rem 2rem;
+}
+
+.conversation-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  border: 1px solid transparent;
+}
+
+.conversation-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.conversation-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar-circle {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: white;
+  background: linear-gradient(135deg, #4b5563, #1f2937);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.avatar-circle.active-gradient {
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: #10b981;
+  border: 3px solid #1f2937;
+  border-radius: 9999px;
+}
+
+/* Main Chat Panel */
+.chat-main-panel {
+  flex: 1;
+}
+
+.chat-header {
+  height: 6rem;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.header-user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-user-info h3 {
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Messages Area */
+.messages-viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.message-bubble-wrapper {
+  display: flex;
+  width: 100%;
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 1rem 1.5rem;
+  border-radius: 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.message-mine {
+  margin-left: auto;
+  background: var(--message-mine);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message-others {
+  margin-right: auto;
+  background: var(--message-others);
+  color: var(--text-primary);
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message-time {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+}
+
+/* Input Area */
+.chat-input-area {
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--glass-border);
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.25rem;
+  padding: 0.5rem 1rem;
+}
+
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 0.75rem 0;
+  font-size: 0.9375rem;
+}
+
+.chat-input:focus {
+  outline: none;
+}
+
+.input-icon-btn {
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+  padding: 0.5rem;
+}
+
+.input-icon-btn:hover {
+  color: white;
+}
+
+.send-btn {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: var(--accent-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px -5px rgba(239, 68, 68, 0.4);
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: scale(1.05) rotate(-5deg);
+  box-shadow: 0 15px 30px -5px rgba(239, 68, 68, 0.6);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Right Summary Panel */
+.summary-panel {
+  width: 300px;
+  flex-shrink: 0;
+  padding: 2rem;
+}
+
+.summary-title {
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2rem;
+}
+
+.candidate-name-status {
+  margin-bottom: 2.5rem;
+}
+
+.candidate-name-status h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Progress Tracker */
+.progress-tracker {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.progress-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-line-filled {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  background: var(--accent-red);
+  box-shadow: 0 0 10px var(--accent-red);
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-step {
+  position: relative;
+  margin-bottom: 2.5rem;
+}
+
+.progress-dot {
+  position: absolute;
+  left: -2.375rem;
+  top: 0.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  background: #374151;
+  border: 2px solid #111827;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .progress-dot {
+  background: var(--accent-red);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.step-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.progress-step.active .step-label {
+  color: white;
+}
+
+/* Attachment preview */
+.file-attachment {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--glass-border);
+}
+
+.file-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #ef4444;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+}
+
+.file-actions {
+  font-size: 0.75rem;
+  color: var(--accent-red);
+  font-weight: 700;
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Custom Scrollbar */
+.messaging-glass-panel ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messaging-glass-panel ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messaging-glass-panel ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.messaging-glass-panel ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  items-center: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+}
+
+.empty-icon-box {
+  width: 8rem;
+  height: 8rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-red);
+  margin-bottom: 2rem;
+  border: 1px solid var(--glass-border);
+}

@@ -343,6 +343,24 @@ export const sendMessage = async (receiverId, message) => {
   return data.data;
 };
 
+export const sendChatAttachment = async (receiverId, file, type, message = "") => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('receiverId', receiverId);
+  formData.append('file', file);
+  formData.append('type', type);
+  formData.append('message', message);
+
+  const response = await fetch(`${BASE_URL}/Messages/send-attachment`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || 'Upload attachment failed');
+  return data.data;
+};
+
 // RESUMES (Multi-CV Management)
 export const getResumes = async () => {
   const data = await apiFetch('/Resumes');
