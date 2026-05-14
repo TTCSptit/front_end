@@ -121,10 +121,15 @@ export const ChatProvider = ({ children }) => {
           };
         });
 
-        // Tìm tin nhắn cuối cùng có chứa dữ liệu AI để hiển thị Dashboard
-        const lastDataMsg = [...mappedHistory].reverse().find(m => 
-          m.aiData && (m.aiData.matching_score !== undefined || m.aiData.skill_matrix || m.aiData.matchingScore)
-        );
+        // Tìm tin nhắn cuối cùng có chứa dữ liệu AI "hợp lệ" để hiển thị Dashboard
+        const lastDataMsg = [...mappedHistory].reverse().find(m => {
+          if (!m.aiData) return false;
+          const score = m.aiData.matching_score ?? m.aiData.matchingScore ?? 0;
+          const skills = m.aiData.skill_matrix || m.aiData.skillMatrix;
+          const extracted = m.aiData.extracted_skills || m.aiData.extractedSkills || [];
+          // Chỉ lấy tin nhắn nếu có điểm > 0 hoặc có danh sách kỹ năng thực tế
+          return score > 0 || (extracted && extracted.length > 0) || skills;
+        });
         
         if (lastDataMsg) {
           updateDashboard(lastDataMsg.aiData);
@@ -149,6 +154,13 @@ export const ChatProvider = ({ children }) => {
     const extracted = data.extracted_skills || data.extractedSkills || [];
     const missing = data.missing_skills || data.missingSkills || [];
     const skills = data.skill_matrix || data.skillMatrix;
+
+    // KIỂM TRA DỮ LIỆU CÓ Ý NGHĨA KHÔNG (Tránh overwrite bằng dữ liệu 0/trống từ AI khi hỏi câu chitchat)
+    const hasMeaningfulData = score > 0 || extracted.length > 0 || skills;
+    if (!hasMeaningfulData) {
+      console.log("Skipping dashboard update: received empty/default AI data.");
+      return;
+    }
 
     setDashboardData(prev => ({
       ...prev,
