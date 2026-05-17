@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { ChevronLeft, Brain, MessageCircle, Activity, Award, AlertTriangle, Lightbulb } from 'lucide-react';
+import { ChevronLeft, Brain, MessageCircle, Activity, Award, AlertTriangle, Lightbulb, FileText } from 'lucide-react';
 
 const InterviewReportPage = () => {
   const { roomId } = useParams();
