@@ -13,6 +13,15 @@ const InterviewReportPage = () => {
     // Giả lập call API lấy dữ liệu report từ Backend
     const fetchReport = async () => {
       setLoading(true);
+      
+      // Check if there is a simulated report in localStorage
+      const simulated = localStorage.getItem(`simulated_report_${roomId}`);
+      if (simulated) {
+        setReportData(JSON.parse(simulated));
+        setLoading(false);
+        return;
+      }
+
       // Thực tế sẽ gọi: axios.get(`/api/interviews/report/${roomId}`)
       setTimeout(() => {
         setReportData({

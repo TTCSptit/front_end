@@ -3,7 +3,7 @@ import {
   Search, Send, Paperclip, Smile, MoreVertical, 
   CheckCheck, Search as SearchIcon,
   ImageIcon, FileText, User, MessageSquare,
-  FileDown, Calendar, Mic, Plus, File as FileIcon, X, Video, BarChart
+  FileDown, Calendar, Mic, Plus, File as FileIcon, X, Video, BarChart, Sparkles
 } from 'lucide-react';
 import { getConversations, getChatMessages, sendMessage, sendChatAttachment, getMediaUrl } from '../services/api';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -311,6 +311,41 @@ const MessagingPage = ({ role }) => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                <button 
+                  onClick={async () => {
+                    const myId = sessionStorage.getItem('userId') || '';
+                    const ids = [myId, activeId].sort();
+                    const sharedRoomId = `${ids[0]}_${ids[1]}`;
+                    
+                    alert("🤖 AI (Llama 3 Local via Kaggle) đang tiến hành phân tích kịch bản phỏng vấn giả lập...\n\nQuá trình này mất khoảng 10-20 giây. Vui lòng không tắt trình duyệt!");
+                    
+                    try {
+                      const response = await fetch('http://127.0.0.1:8000/api/interview/simulate-analysis', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ room_id: sharedRoomId })
+                      });
+                      
+                      if (!response.ok) throw new Error("Không thể kết nối AI Service local.");
+                      const result = await response.json();
+                      
+                      // Save the result directly to localStorage so the Report page can display it
+                      localStorage.setItem(`simulated_report_${sharedRoomId}`, JSON.stringify(result));
+                      
+                      alert("🎉 Chúc mừng! AI đã chấm điểm xong bằng Llama 3 Local!\nĐang chuyển hướng bạn sang trang Báo cáo phỏng vấn...");
+                      navigate(`/interview-report/${sharedRoomId}`);
+                    } catch (err) {
+                      console.error(err);
+                      alert("⚠️ Thất bại: Hãy đảm bảo bạn đã bật local AI Python Service (cổng 8000) và đường hầm Kaggle đang hoạt động nhé!");
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-purple-500/20 border border-purple-500/20"
+                >
+                  <Sparkles size={18} className="text-yellow-300 animate-pulse" />
+                  <span>AI Test</span>
+                </button>
                 <button 
                   onClick={() => {
                     const myId = sessionStorage.getItem('userId') || '';
