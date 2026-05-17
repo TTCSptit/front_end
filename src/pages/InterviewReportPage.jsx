@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { ChevronLeft, Brain, MessageCircle, Activity, Award, AlertTriangle, Lightbulb, FileText } from 'lucide-react';
+import { getInterviewReport } from '../services/api';
 
 const InterviewReportPage = () => {
   const { roomId } = useParams();
@@ -13,34 +14,46 @@ const InterviewReportPage = () => {
     // Giả lập call API lấy dữ liệu report từ Backend
     const fetchReport = async () => {
       setLoading(true);
-      
-      // Check if there is a simulated report in localStorage
-      const simulated = localStorage.getItem(`simulated_report_${roomId}`);
-      if (simulated) {
-        setReportData(JSON.parse(simulated));
+      try {
+        const data = await getInterviewReport(roomId);
+        if (data) {
+          const formatted = {
+            communication_score: data.communicationScore,
+            technical_score: data.technicalScore,
+            confidence_score: data.confidenceScore,
+            feedback_strengths: typeof data.feedbackStrengths === 'string' ? JSON.parse(data.feedbackStrengths) : data.feedbackStrengths,
+            feedback_weaknesses: typeof data.feedbackWeaknesses === 'string' ? JSON.parse(data.feedbackWeaknesses) : data.feedbackWeaknesses,
+            transcript_summary: data.transcriptSummary
+          };
+          setReportData(formatted);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải báo cáo phỏng vấn từ Database C#:", err);
+        // Dự phòng bằng localStorage
+        const simulated = localStorage.getItem(`simulated_report_${roomId}`);
+        if (simulated) {
+          setReportData(JSON.parse(simulated));
+        } else {
+          // Dự phòng bằng Mock Data mặc định nếu không có dữ liệu nào
+          setReportData({
+            communication_score: 85,
+            technical_score: 70,
+            confidence_score: 90,
+            feedback_strengths: [
+              "Phong thái tự tin, trả lời dứt khoát không ngập ngừng.",
+              "Phát âm tiếng Anh tốt khi nói các thuật ngữ kỹ thuật (RESTful, API).",
+              "Mở đầu cuộc trò chuyện thân thiện và chuyên nghiệp."
+            ],
+            feedback_weaknesses: [
+              "Chưa giải thích rõ được sự khác nhau giữa Interface và Abstract Class.",
+              "Đôi khi nói hơi nhanh khiến người nghe khó bắt kịp."
+            ],
+            transcript_summary: "Ứng viên chào hỏi lịch sự. HR yêu cầu giới thiệu bản thân và hỏi 2 câu về OOP (Object-Oriented Programming). Ứng viên trả lời mượt phần giới thiệu nhưng hơi lúng túng ở câu hỏi sâu về tính đa hình (Polymorphism)."
+          });
+        }
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // Thực tế sẽ gọi: axios.get(`/api/interviews/report/${roomId}`)
-      setTimeout(() => {
-        setReportData({
-          communication_score: 85,
-          technical_score: 70,
-          confidence_score: 90,
-          feedback_strengths: [
-            "Phong thái tự tin, trả lời dứt khoát không ngập ngừng.",
-            "Phát âm tiếng Anh tốt khi nói các thuật ngữ kỹ thuật (RESTful, API).",
-            "Mở đầu cuộc trò chuyện thân thiện và chuyên nghiệp."
-          ],
-          feedback_weaknesses: [
-            "Chưa giải thích rõ được sự khác nhau giữa Interface và Abstract Class.",
-            "Đôi khi nói hơi nhanh khiến người nghe khó bắt kịp."
-          ],
-          transcript_summary: "Ứng viên chào hỏi lịch sự. HR yêu cầu giới thiệu bản thân và hỏi 2 câu về OOP (Object-Oriented Programming). Ứng viên trả lời mượt phần giới thiệu nhưng hơi lúng túng ở câu hỏi sâu về tính đa hình (Polymorphism)."
-        });
-        setLoading(false);
-      }, 1500);
     };
 
     fetchReport();

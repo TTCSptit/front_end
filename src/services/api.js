@@ -3,8 +3,13 @@
 //  Base URL: .NET backend chạy ở localhost:5227 (hoặc port của bạn)
 // ============================================================
 
-const BASE_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api';
-const SERVER_URL = 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net';
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const BASE_URL = IS_LOCAL 
+  ? 'http://localhost:5272/api' 
+  : 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net/api';
+const SERVER_URL = IS_LOCAL 
+  ? 'http://localhost:5272' 
+  : 'https://jobptit-api-fbevbkfre0c4h4g4.southeastasia-01.azurewebsites.net';
 
 export const getMediaUrl = (path) => {
   if (!path) return null;
@@ -421,4 +426,16 @@ export const getMarketSummary = async () => {
 export const getMarketInsights = async () => {
   const data = await apiFetch('/Stats/market-insights');
   return data.data;
+};
+
+// INTERVIEW REPORTS
+export const saveInterviewReport = async (reportDto) => {
+  return await apiFetch('/Ai/interview/report', {
+    method: 'POST',
+    body: JSON.stringify(reportDto),
+  });
+};
+
+export const getInterviewReport = async (roomId) => {
+  return await apiFetch(`/Ai/interview/report/${roomId}`);
 };

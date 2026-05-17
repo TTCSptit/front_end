@@ -18,16 +18,12 @@ const InterviewRoomPage = () => {
       const appID = 1406254714;
       const serverSecret = "e0f2476f985f86d15c755618139eea3e";
       
-      // Get user from local storage
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : { 
-          id: Math.floor(Math.random() * 10000).toString(), 
-          fullName: "Guest_" + Math.floor(Math.random() * 1000) 
-      };
+      // Get user from sessionStorage
+      const sessionUserId = sessionStorage.getItem('userId');
+      const sessionUserFullName = sessionStorage.getItem('userFullName');
       
-      // In a real app, ID must be a string without special chars
-      const userID = user.id.toString().replace(/[^a-zA-Z0-9]/g, '');
-      const userName = user.fullName || "Candidate";
+      const userID = sessionUserId ? sessionUserId.toString().replace(/[^a-zA-Z0-9]/g, '') : "Guest" + Math.floor(Math.random() * 1000);
+      const userName = sessionUserFullName || "User_" + Math.floor(Math.random() * 1000);
 
       // Generate kit token for test
       const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
@@ -55,8 +51,8 @@ const InterviewRoomPage = () => {
         showUserList: true,
         layout: "Auto",
         onLeaveRoom: () => {
-          // After interview ends, redirect based on role
-          const role = localStorage.getItem('role');
+          // After interview ends, redirect based on role from sessionStorage
+          const role = sessionStorage.getItem('userRole');
           if (role === 'recruiter') {
             navigate('/recruiter/dashboard');
           } else {

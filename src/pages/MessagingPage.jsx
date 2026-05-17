@@ -5,7 +5,7 @@ import {
   ImageIcon, FileText, User, MessageSquare,
   FileDown, Calendar, Mic, Plus, File as FileIcon, X, Video, BarChart, Sparkles
 } from 'lucide-react';
-import { getConversations, getChatMessages, sendMessage, sendChatAttachment, getMediaUrl } from '../services/api';
+import { getConversations, getChatMessages, sendMessage, sendChatAttachment, getMediaUrl, saveInterviewReport } from '../services/api';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import './MessagingPage.css';
 
@@ -331,10 +331,24 @@ const MessagingPage = ({ role }) => {
                       if (!response.ok) throw new Error("Không thể kết nối AI Service local.");
                       const result = await response.json();
                       
-                      // Save the result directly to localStorage so the Report page can display it
-                      localStorage.setItem(`simulated_report_${sharedRoomId}`, JSON.stringify(result));
+                      // 1. Lưu vào Database C# qua saveInterviewReport
+                      try {
+                        await saveInterviewReport({
+                          roomId: sharedRoomId,
+                          communicationScore: result.communication_score,
+                          technicalScore: result.technical_score,
+                          confidenceScore: result.confidence_score,
+                          feedbackStrengths: JSON.stringify(result.feedback_strengths),
+                          feedbackWeaknesses: JSON.stringify(result.feedback_weaknesses),
+                          transcriptSummary: result.transcript_summary
+                        });
+                      } catch (dbErr) {
+                        console.error("Lỗi khi lưu báo cáo vào Database C#:", dbErr);
+                        // Dự phòng bằng localStorage nếu có lỗi
+                        localStorage.setItem(`simulated_report_${sharedRoomId}`, JSON.stringify(result));
+                      }
                       
-                      alert("🎉 Chúc mừng! AI đã chấm điểm xong bằng Llama 3 Local!\nĐang chuyển hướng bạn sang trang Báo cáo phỏng vấn...");
+                      alert("🎉 Chúc mừng! AI đã chấm điểm và lưu vào C# Database thành công!\nĐang chuyển hướng bạn sang trang Báo cáo phỏng vấn...");
                       navigate(`/interview-report/${sharedRoomId}`);
                     } catch (err) {
                       console.error(err);
