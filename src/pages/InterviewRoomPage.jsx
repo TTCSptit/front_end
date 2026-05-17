@@ -9,14 +9,9 @@ const InterviewRoomPage = () => {
 
   useEffect(() => {
     const initMeeting = async () => {
-      // Credentials from Environment Variables (.env)
-      const appID = parseInt(import.meta.env.VITE_ZEGO_APP_ID || "0");
-      const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET || "";
-      
-      if (!appID || !serverSecret) {
-        console.error("ZegoCloud credentials missing in environment variables (.env)!");
-        return;
-      }
+      // Credentials from ZegoCloud Console
+      const appID = 1406254714;
+      const serverSecret = "e0f2476f985f86d15c755618139eea3e";
       
       // Get user from local storage
       const userStr = localStorage.getItem('user');
