@@ -312,14 +312,24 @@ const MessagingPage = ({ role }) => {
               </div>
               <div className="flex items-center gap-4">
                 <button 
-                  onClick={() => navigate(`/interview-report/${activeId}`)}
+                  onClick={() => {
+                    const myId = sessionStorage.getItem('userId') || '';
+                    const ids = [myId, activeId].sort();
+                    const sharedRoomId = `${ids[0]}_${ids[1]}`;
+                    navigate(`/interview-report/${sharedRoomId}`);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/10"
                 >
                   <BarChart size={18} className="text-blue-400" />
                   <span>Report</span>
                 </button>
                 <button 
-                  onClick={() => navigate(`/interview/${activeId}`)}
+                  onClick={() => {
+                    const myId = sessionStorage.getItem('userId') || '';
+                    const ids = [myId, activeId].sort();
+                    const sharedRoomId = `${ids[0]}_${ids[1]}`;
+                    navigate(`/interview/${sharedRoomId}`);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 bg-accent-red hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
                 >
                   <Video size={18} />
