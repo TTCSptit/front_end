@@ -5,10 +5,15 @@ import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
 const InterviewRoomPage = () => {
   const { roomId } = useParams();
   const meetingContainerRef = useRef(null);
+  const isJoinedRef = useRef(false);
+  const zpInstanceRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const initMeeting = async () => {
+      if (isJoinedRef.current) return;
+      isJoinedRef.current = true;
+
       // Credentials from ZegoCloud Console
       const appID = 1406254714;
       const serverSecret = "e0f2476f985f86d15c755618139eea3e";
@@ -35,6 +40,7 @@ const InterviewRoomPage = () => {
 
       // Create instance
       const zp = ZegoUIKitPrebuilt.create(kitToken);
+      zpInstanceRef.current = zp;
 
       // Join the room
       zp.joinRoom({
@@ -64,7 +70,15 @@ const InterviewRoomPage = () => {
       initMeeting();
     }
     
-    // Cleanup is handled by Zego internally on page leave
+    return () => {
+      if (zpInstanceRef.current) {
+        try {
+          zpInstanceRef.current.destroy();
+        } catch (e) {
+          // Zego instances might not have destroy, or handles it internally
+        }
+      }
+    };
   }, [roomId, navigate]);
 
   return (
