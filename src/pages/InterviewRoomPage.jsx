@@ -1,0 +1,82 @@
+import React, { useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
+
+const InterviewRoomPage = () => {
+  const { roomId } = useParams();
+  const meetingContainerRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const initMeeting = async () => {
+      // Credentials from Environment Variables (.env)
+      const appID = parseInt(import.meta.env.VITE_ZEGO_APP_ID || "0");
+      const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET || "";
+      
+      if (!appID || !serverSecret) {
+        console.error("ZegoCloud credentials missing in environment variables (.env)!");
+        return;
+      }
+      
+      // Get user from local storage
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : { 
+          id: Math.floor(Math.random() * 10000).toString(), 
+          fullName: "Guest_" + Math.floor(Math.random() * 1000) 
+      };
+      
+      // In a real app, ID must be a string without special chars
+      const userID = user.id.toString().replace(/[^a-zA-Z0-9]/g, '');
+      const userName = user.fullName || "Candidate";
+
+      // Generate kit token for test
+      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+        appID, 
+        serverSecret, 
+        roomId, 
+        userID, 
+        userName
+      );
+
+      // Create instance
+      const zp = ZegoUIKitPrebuilt.create(kitToken);
+
+      // Join the room
+      zp.joinRoom({
+        container: meetingContainerRef.current,
+        scenario: {
+          mode: ZegoUIKitPrebuilt.OneONoneCall, // 1-on-1 interview
+        },
+        showPreJoinView: true,
+        showScreenSharingButton: true,
+        turnOnMicrophoneWhenJoining: true,
+        turnOnCameraWhenJoining: true,
+        showUserList: true,
+        layout: "Auto",
+        onLeaveRoom: () => {
+          // After interview ends, redirect based on role
+          const role = localStorage.getItem('role');
+          if (role === 'recruiter') {
+            navigate('/recruiter/dashboard');
+          } else {
+            navigate('/applied-jobs');
+          }
+        }
+      });
+    };
+
+    if (meetingContainerRef.current) {
+      initMeeting();
+    }
+    
+    // Cleanup is handled by Zego internally on page leave
+  }, [roomId, navigate]);
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#1a1b1e', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
+      <div ref={meetingContainerRef} style={{ width: '100%', height: '100%' }} />
+    </div>
+  );
+};
+
+export default InterviewRoomPage;

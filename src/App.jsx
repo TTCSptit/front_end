@@ -26,6 +26,8 @@ import MessagingPage from './pages/MessagingPage';
 import ManageCVPage from './pages/ManageCVPage';
 import CVEditorPage from './pages/CVEditorPage';
 import AllJobsPage from './pages/AllJobsPage';
+import InterviewRoomPage from './pages/InterviewRoomPage';
+import InterviewReportPage from './pages/InterviewReportPage';
 import ChatBot from './components/ChatBot';
 import { ChatProvider } from './context/ChatContext';
 
@@ -71,6 +73,8 @@ function App() {
           <Route path="/manage-cv" element={<ManageCVPage />} />
           <Route path="/cv-editor" element={<CVEditorPage />} />
           <Route path="/market-demand" element={<RecruitmentDemandPage />} />
+          <Route path="/interview/:roomId" element={<InterviewRoomPage />} />
+          <Route path="/interview-report/:roomId" element={<InterviewReportPage />} />
         </Routes>
         <ChatBot isOpen={isChatOpen} onToggle={toggleChat} />
       </Layout>

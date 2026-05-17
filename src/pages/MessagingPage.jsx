@@ -3,7 +3,7 @@ import {
   Search, Send, Paperclip, Smile, MoreVertical, 
   CheckCheck, Search as SearchIcon,
   ImageIcon, FileText, User, MessageSquare,
-  FileDown, Calendar, Mic, Plus, File as FileIcon, X
+  FileDown, Calendar, Mic, Plus, File as FileIcon, X, Video, BarChart
 } from 'lucide-react';
 import { getConversations, getChatMessages, sendMessage, sendChatAttachment, getMediaUrl } from '../services/api';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -309,6 +309,22 @@ const MessagingPage = ({ role }) => {
                     ACTIVE NOW | {activeChat.role || 'Back-end Candidate'}
                   </div>
                 </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => navigate(`/interview-report/${activeId}`)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/10"
+                >
+                  <BarChart size={18} className="text-blue-400" />
+                  <span>Report</span>
+                </button>
+                <button 
+                  onClick={() => navigate(`/interview/${activeId}`)}
+                  className="flex items-center gap-2 px-4 py-2 bg-accent-red hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
+                >
+                  <Video size={18} />
+                  <span>{role === 'recruiter' ? 'Start Mock Interview' : 'Join Call'}</span>
+                </button>
               </div>
             </div>
 
