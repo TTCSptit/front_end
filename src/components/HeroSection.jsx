@@ -1,13 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getCategories } from '../services/api';
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const [industry, setIndustry] = useState('');
   const [location, setLocation] = useState('');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const catData = await getCategories();
+        setCategories(catData || []);
+      } catch (err) {
+        console.error('Lỗi khi tải danh mục ngành nghề từ C# Backend:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -122,10 +136,9 @@ const HeroSection = () => {
                onChange={(e) => setIndustry(e.target.value)}
              >
                <option value="">Ngành nghề</option>
-               <option>Công nghệ thông tin</option>
-               <option>Viễn thông</option>
-               <option>Marketing</option>
-               <option>Kế toán - Kiểm toán</option>
+               {categories.map((cat, index) => (
+                 <option key={cat.id || index} value={cat.name}>{cat.name}</option>
+               ))}
              </select>
           </div>
 
