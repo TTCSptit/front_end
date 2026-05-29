@@ -376,33 +376,44 @@ const JobApplicantsPage = () => {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 border-t border-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3 pt-6 border-t border-gray-100">
                     <button 
                       onClick={() => downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`)}
-                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
                     >
                       <Download size={18} /> Tải CV
                     </button>
                     <button 
                       onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}&name=${encodeURIComponent(selectedApplicant.fullName)}`)}
-                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
                     >
                       <MessageSquare size={18} /> Nhắn tin
                     </button>
                     <button 
+                      onClick={() => handleStatusUpdate(selectedApplicant.id, 'Pending')}
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition font-semibold text-sm border border-yellow-200"
+                    >
+                      <Clock size={18} /> Hoãn lại
+                    </button>
+                    <button 
                       onClick={() => handleStatusUpdate(selectedApplicant.id, 'Rejected')}
-                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition font-semibold text-sm border border-red-200"
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition font-semibold text-sm border border-red-200"
                     >
                       <XCircle size={18} /> Loại
                     </button>
                     <button 
+                      onClick={() => handleStatusUpdate(selectedApplicant.id, 'Accepted')}
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition font-semibold text-sm border border-green-200"
+                    >
+                      <CheckCircle size={18} /> Duyệt
+                    </button>
+                    <button 
                       onClick={() => {
-                        handleStatusUpdate(selectedApplicant.id, 'Accepted');
                         setShowScheduleModal(true);
                       }}
-                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-bold text-sm shadow-md shadow-green-200"
+                      className="col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-bold text-sm shadow-md shadow-green-200"
                     >
-                      <CheckCircle size={18} /> Hẹn lịch
+                      <Calendar size={18} /> Hẹn lịch
                     </button>
                   </div>
                 </div>
