@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Mail, Phone, Calendar, Download,
   Star, Clock, MapPin, Briefcase, Filter, Search,
-  CheckCircle, XCircle, MessageSquare, Users
+  CheckCircle, XCircle, MessageSquare, Users, Bot, Sparkles, AlertTriangle
 } from 'lucide-react';
 import { getApplicants, updateApplicationStatus, getApplicantCvUrl, downloadProtectedFile, sendMessage, getSavedCandidates, saveCandidate, unsaveCandidate } from '../services/api';
 
@@ -30,6 +30,24 @@ const JobApplicantsPage = () => {
     notes: ''
   });
   const [savedIds, setSavedIds] = useState([]);
+  const [sortByAi, setSortByAi] = useState(true);
+
+  // Parse AI Data helper
+  const parseAiJson = (jsonStr) => {
+    if (!jsonStr) return [];
+    try {
+      return JSON.parse(jsonStr);
+    } catch {
+      return [];
+    }
+  };
+
+  const getAiScoreColor = (score) => {
+    if (!score) return 'text-gray-400 bg-gray-100 border-gray-200';
+    if (score >= 80) return 'text-green-700 bg-green-50 border-green-200 shadow-green-100';
+    if (score >= 50) return 'text-yellow-700 bg-yellow-50 border-yellow-200 shadow-yellow-100';
+    return 'text-red-700 bg-red-50 border-red-200 shadow-red-100';
+  };
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -136,6 +154,12 @@ const JobApplicantsPage = () => {
     }
   };
 
+  const sortedApplicants = [...applicants].sort((a, b) => {
+    if (sortByAi) {
+      return (b.aiScore || 0) - (a.aiScore || 0);
+    }
+    return new Date(b.appliedAt) - new Date(a.appliedAt);
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
@@ -187,51 +211,53 @@ const JobApplicantsPage = () => {
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-ptit-red focus:ring-1 focus:ring-ptit-red outline-none"
             />
           </div>
+          <button 
+            onClick={() => setSortByAi(!sortByAi)}
+            className={`flex items-center gap-2 px-6 py-3 border rounded-xl transition ${sortByAi ? 'bg-ptit-red text-white border-ptit-red shadow-lg shadow-red-100' : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'}`}
+          >
+            <Sparkles size={18} />
+            {sortByAi ? 'Đang xếp hạng AI' : 'Xếp hạng bằng AI'}
+          </button>
           <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
             <Filter size={18} />
             Lọc
           </button>
         </div>
 
-        {/* Applicants List */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* List */}
-          <div className="lg:col-span-2 space-y-4">
-            {Array.isArray(applicants) && applicants.length > 0 ? applicants.map((applicant, index) => (
+        {/* Applicants List & Detail Split View */}
+        <div className="grid lg:grid-cols-12 gap-6">
+          
+          {/* List (Left) */}
+          <div className="lg:col-span-5 flex flex-col gap-3 h-[800px] overflow-y-auto pr-2 pb-10">
+            {sortedApplicants.length > 0 ? sortedApplicants.map((applicant, index) => (
               <div 
                 key={applicant.id || index}
                 onClick={() => setSelectedApplicant(applicant)}
-                className={`bg-white rounded-2xl p-6 shadow-sm border cursor-pointer transition-all ${
+                className={`bg-white rounded-2xl p-4 shadow-sm border cursor-pointer transition-all flex gap-4 items-center ${
                   selectedApplicant?.id === applicant.id 
-                    ? 'border-ptit-red shadow-md' 
-                    : 'border-gray-100 hover:shadow-md'
+                    ? 'border-ptit-red shadow-md ring-1 ring-red-100' 
+                    : 'border-gray-100 hover:border-red-200'
                 }`}
               >
-                <div className="flex items-start gap-4">
-                  {/* Avatar */}
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-xl shrink-0">
-                      {(applicant.fullName || 'U').charAt(0)}
+                {/* Avatar */}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-lg shrink-0">
+                  {(applicant.fullName || 'U').charAt(0)}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-gray-900 truncate pr-2">{applicant.fullName}</h3>
+                    <div className={`shrink-0 px-2.5 py-1 rounded-lg border font-bold text-xs flex items-center gap-1 shadow-sm ${getAiScoreColor(applicant.aiScore)}`}>
+                      <Bot size={12} />
+                      {applicant.aiScore ? `${applicant.aiScore}% Match` : 'Đang chấm...'}
                     </div>
                   </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-gray-900 truncate">{applicant.fullName}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(applicant.status)}`}>
-                        {getStatusLabel(applicant.status)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-2">{applicant.email}</p>
-                  </div>
-
-                  {/* Meta */}
-                  <div className="text-right text-sm text-gray-400 shrink-0">
-                    <div className="flex items-center gap-1 mt-1">
-                      <Calendar size={14} />
-                      {applicant.appliedAt ? new Date(applicant.appliedAt).toLocaleDateString() : 'N/A'}
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500 truncate">{applicant.email}</p>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${getStatusColor(applicant.status)}`}>
+                      {getStatusLabel(applicant.status)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -242,102 +268,152 @@ const JobApplicantsPage = () => {
             )}
           </div>
 
-          {/* Detail Panel */}
-          <div className="lg:col-span-1">
+          {/* Detail Panel (Right) */}
+          <div className="lg:col-span-7">
             {selectedApplicant ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28 animate-fade-in">
-                <div className="text-center mb-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4 shadow-lg relative">
-                    {selectedApplicant.fullName.charAt(0)}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28 animate-fade-in">
+                {/* AI Score Banner */}
+                {selectedApplicant.aiScore ? (
+                  <div className={`px-6 py-4 border-b flex items-center justify-between ${
+                    selectedApplicant.aiScore >= 80 ? 'bg-green-50 border-green-100' :
+                    selectedApplicant.aiScore >= 50 ? 'bg-yellow-50 border-yellow-100' : 'bg-red-50 border-red-100'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm ${
+                        selectedApplicant.aiScore >= 80 ? 'text-green-600' :
+                        selectedApplicant.aiScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        <Sparkles size={24} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-900">AI Đánh Giá Độ Phù Hợp</div>
+                        <div className="text-sm opacity-80">Hệ thống phân tích tự động CV ứng viên với JD</div>
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black">{selectedApplicant.aiScore}%</div>
+                  </div>
+                ) : (
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-400 shadow-sm">
+                      <Bot size={24} />
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">AI đang trong quá trình phân tích hồ sơ...</div>
+                  </div>
+                )}
+
+                <div className="p-6">
+                  {/* Basic Info */}
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-ptit-red to-red-400 flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                        {selectedApplicant.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                          {selectedApplicant.fullName}
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSaveCandidate(selectedApplicant);
+                            }}
+                            className={`p-1.5 rounded-full transition-all ${
+                              savedIds.includes(selectedApplicant.userId) 
+                                ? 'text-yellow-500 bg-yellow-50' 
+                                : 'text-gray-300 hover:text-yellow-500 hover:bg-gray-50'
+                            }`}
+                            title="Lưu ứng viên"
+                          >
+                            <Star size={18} fill={savedIds.includes(selectedApplicant.userId) ? "currentColor" : "none"} />
+                          </button>
+                        </h3>
+                        <div className="flex gap-4 text-sm text-gray-600">
+                          <span className="flex items-center gap-1"><Mail size={14}/> {selectedApplicant.email}</span>
+                          <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(selectedApplicant.appliedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(selectedApplicant.status)}`}>
+                      {getStatusLabel(selectedApplicant.status)}
+                    </span>
+                  </div>
+
+                  {/* AI Reasoning & Strengths/Weaknesses */}
+                  {selectedApplicant.aiReasoning && (
+                    <div className="mb-8 space-y-6">
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                        <p className="text-sm text-blue-900 italic font-medium leading-relaxed">
+                          "{selectedApplicant.aiReasoning}"
+                        </p>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                          <h4 className="font-bold flex items-center gap-2 text-green-700 mb-3 border-b pb-2">
+                            <CheckCircle size={16}/> Điểm mạnh
+                          </h4>
+                          <ul className="space-y-2">
+                            {parseAiJson(selectedApplicant.aiStrengths).map((s, i) => (
+                              <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                                <span className="text-green-500 mt-0.5">•</span> {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                          <h4 className="font-bold flex items-center gap-2 text-red-700 mb-3 border-b pb-2">
+                            <AlertTriangle size={16}/> Điểm yếu / Thiếu sót
+                          </h4>
+                          <ul className="space-y-2">
+                            {parseAiJson(selectedApplicant.aiWeaknesses).map((w, i) => (
+                              <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                                <span className="text-red-500 mt-0.5">•</span> {w}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 border-t border-gray-100">
                     <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSaveCandidate(selectedApplicant);
-                      }}
-                      className={`absolute -right-2 -bottom-2 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white transition-all shadow-md ${
-                        savedIds.includes(selectedApplicant.userId) 
-                          ? 'bg-yellow-400 text-white' 
-                          : 'bg-gray-100 text-gray-400 hover:text-yellow-500'
-                      }`}
-                      title={savedIds.includes(selectedApplicant.userId) ? "Bỏ lưu" : "Lưu ứng viên"}
+                      onClick={() => downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`)}
+                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
                     >
-                      <Star size={18} fill={savedIds.includes(selectedApplicant.userId) ? "currentColor" : "none"} />
+                      <Download size={18} /> Tải CV
                     </button>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">{selectedApplicant.fullName}</h3>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Mail size={16} className="text-gray-400" />
-                    <span className="text-gray-700">{selectedApplicant.email}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={() => {
-                      if (!selectedApplicant.cvurl) {
-                        alert('Ứng viên này chưa tải lên CV.');
-                        return;
-                      }
-                      downloadProtectedFile(getApplicantCvUrl(selectedApplicant.id), `CV_${selectedApplicant.fullName}.pdf`);
-                    }}
-                    className={`flex items-center justify-center gap-2 w-full py-4 font-bold rounded-xl transition shadow-lg ${
-                      selectedApplicant.cvurl 
-                        ? 'bg-ptit-red text-white hover:bg-red-700 shadow-red-200' 
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                    }`}
-                  >
-                    <Download size={20} />
-                    {selectedApplicant.cvurl ? 'Tải CV' : 'Chưa có CV'}
-                  </button>
-                  <div className="grid grid-cols-2 gap-3">
                     <button 
-                      onClick={() => handleStatusUpdate(selectedApplicant.id, 'Accepted')}
-                      className={`flex items-center justify-center gap-2 py-3 border-2 font-bold rounded-xl transition ${
-                        selectedApplicant.status === 'Accepted' 
-                          ? 'bg-green-500 text-white border-green-500' 
-                          : 'border-green-500 text-green-600 hover:bg-green-50'
-                      }`}
+                      onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}&name=${encodeURIComponent(selectedApplicant.fullName)}`)}
+                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition font-semibold text-sm border border-gray-200"
                     >
-                      <CheckCircle size={18} />
-                      {selectedApplicant.status === 'Accepted' ? 'Đã duyệt' : 'Duyệt'}
+                      <MessageSquare size={18} /> Nhắn tin
                     </button>
                     <button 
                       onClick={() => handleStatusUpdate(selectedApplicant.id, 'Rejected')}
-                      className={`flex items-center justify-center gap-2 py-3 border-2 font-bold rounded-xl transition ${
-                        selectedApplicant.status === 'Rejected' 
-                          ? 'bg-red-500 text-white border-red-500' 
-                          : 'border-red-500 text-red-600 hover:bg-red-50'
-                      }`}
+                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition font-semibold text-sm border border-red-200"
                     >
-                      <XCircle size={18} />
-                      {selectedApplicant.status === 'Rejected' ? 'Từ chối' : 'Loại'}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    <button 
-                      onClick={() => navigate(`/recruiter/messages?contactId=${selectedApplicant.userId}&name=${encodeURIComponent(selectedApplicant.fullName)}`)}
-                      className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-md"
-                    >
-                      <MessageSquare size={18} />
-                      Nhắn tin
+                      <XCircle size={18} /> Loại
                     </button>
                     <button 
-                      onClick={() => setShowScheduleModal(true)}
-                      className="flex items-center justify-center gap-2 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-md"
+                      onClick={() => {
+                        handleStatusUpdate(selectedApplicant.id, 'Accepted');
+                        setShowScheduleModal(true);
+                      }}
+                      className="col-span-2 md:col-span-1 flex flex-col items-center justify-center gap-1 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-bold text-sm shadow-md shadow-green-200"
                     >
-                      <Calendar size={18} />
-                      Hẹn lịch
+                      <CheckCircle size={18} /> Hẹn lịch
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center text-gray-400">
-                <Users size={64} className="mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Chọn một ứng viên để xem chi tiết</p>
+              <div className="bg-white rounded-2xl p-16 shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center h-full">
+                <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                  <Bot size={48} className="text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">So sánh ứng viên thông minh</h3>
+                <p className="text-gray-500 max-w-sm">Chọn một ứng viên từ danh sách bên trái để xem đánh giá chi tiết từ AI và thực hiện các thao tác tuyển dụng.</p>
               </div>
             )}
           </div>
