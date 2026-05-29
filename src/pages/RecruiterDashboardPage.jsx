@@ -4,7 +4,7 @@ import {
   Eye, Users, Calendar, MapPin, DollarSign, 
   MoreVertical, Plus, Search, Filter, Clock,
   CheckCircle, AlertCircle, XCircle, BarChart3,
-  Building2, Star, Trash2, Edit3, Zap, Briefcase, MessageCircle
+  Building2, Star, Trash2, Edit3, Zap, Briefcase, MessageCircle, Bot
 } from 'lucide-react';
 import { getEmployerJobsWithStats, deleteJob } from '../services/api';
 
@@ -126,7 +126,8 @@ const RecruiterDashboardPage = () => {
     { icon: BarChart3, label: 'Thống kê', path: '/recruiter/stats' },
     { icon: MessageCircle, label: 'Tin nhắn', path: '/recruiter/messages' },
     { icon: Building2, label: 'Hồ sơ công ty', path: '/recruiter/company-profile' },
-    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' }
+    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' },
+    { icon: Bot, label: 'AI CV Matcher', path: '/recruiter/ai-matcher' }
   ];
 
   return (

@@ -28,6 +28,7 @@ import CVEditorPage from './pages/CVEditorPage';
 import AllJobsPage from './pages/AllJobsPage';
 import InterviewRoomPage from './pages/InterviewRoomPage';
 import InterviewReportPage from './pages/InterviewReportPage';
+import AICVMatcherPage from './pages/AICVMatcherPage';
 import ChatBot from './components/ChatBot';
 import { ChatProvider } from './context/ChatContext';
 
@@ -61,6 +62,7 @@ function App() {
           <Route path="/recruiter" element={<RecruiterPage />} />
           <Route path="/recruiter/post-job" element={<PostJobPage />} />
           <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
+          <Route path="/recruiter/ai-matcher" element={<AICVMatcherPage />} />
           <Route path="/recruiter/jobs/:jobId/applicants" element={<JobApplicantsPage />} />
           <Route path="/recruiter/company-profile" element={<CompanyProfilePage />} />
           <Route path="/recruiter/stats" element={<RecruiterStatsPage />} />
