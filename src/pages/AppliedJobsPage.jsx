@@ -5,7 +5,7 @@ import {
   ArrowRight, Filter, SlidersHorizontal, LayoutGrid, List, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getMyApplications, getMediaUrl } from '../services/api';
+import { getMyApplications, getMediaUrl, withdrawApplication } from '../services/api';
 
 const AppliedJobsPage = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
@@ -46,6 +46,17 @@ const AppliedJobsPage = () => {
     }
   };
 
+  const handleWithdraw = async (applicationId, jobTitle) => {
+    if (window.confirm(`Bạn có chắc chắn muốn rút đơn ứng tuyển cho vị trí "${jobTitle}" không? Hành động này không thể hoàn tác.`)) {
+      try {
+        await withdrawApplication(applicationId);
+        setAppliedJobs(prev => prev.filter(job => job.id !== applicationId));
+        alert('Rút đơn ứng tuyển thành công!');
+      } catch (err) {
+        alert('Có lỗi xảy ra: ' + err.message);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -172,6 +183,14 @@ const AppliedJobsPage = () => {
                         <ArrowRight size={20} />
                     </Link>
                 </div>
+                {item.status === 'Pending' && (
+                  <button 
+                    onClick={() => handleWithdraw(item.id, item.jobCardDto.title)}
+                    className="px-4 py-2 mt-2 md:mt-0 md:ml-4 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-100 transition-colors border border-red-100"
+                  >
+                    Rút đơn
+                  </button>
+                )}
               </div>
             </div>
           ))}

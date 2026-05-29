@@ -230,6 +230,11 @@ export const updateApplicationStatus = async (dto) => {
 
 export const getApplicantCvUrl = (applicationId) => `${BASE_URL}/Applications/${applicationId}/cv`;
 
+export const withdrawApplication = async (applicationId) => {
+  const data = await apiFetch(`/Applications/${applicationId}`, { method: 'DELETE' });
+  return data;
+};
+
 // COMPANIES
 export const getMyCompany = async () => {
   const data = await apiFetch('/Companies/my-company');
