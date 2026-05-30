@@ -50,28 +50,63 @@ const JobApplicantsPage = () => {
   };
 
   useEffect(() => {
-    const fetchApplicants = async () => {
+    let intervalId = null;
+    let isComponentMounted = true;
+
+    const fetchApplicants = async (isSilent = false) => {
+      if (!isSilent) setLoading(true);
       try {
         const data = await getApplicants(jobId);
-        setApplicants(data?.applicants || (Array.isArray(data) ? data : []));
+        if (isComponentMounted) {
+          const newApps = data?.applicants || (Array.isArray(data) ? data : []);
+          setApplicants(newApps);
+          
+          // Tự động cập nhật hồ sơ đang được chọn để nảy điểm AI ngay lập tức
+          setSelectedApplicant(prev => {
+            if (!prev) return prev;
+            return newApps.find(a => a.id === prev.id) || prev;
+          });
+
+          // Kiểm tra xem có hồ sơ nào chưa có điểm AI không
+          const hasPending = newApps.some(a => a.aiScore === null || a.aiScore === undefined);
+          
+          // Smart Polling: Cứ 5s quét lại 1 lần nếu còn hồ sơ chưa chấm xong
+          if (hasPending && !intervalId) {
+            intervalId = setInterval(() => fetchApplicants(true), 5000);
+          } else if (!hasPending && intervalId) {
+            // Đã chấm xong hết thì tắt auto-refresh
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
       } catch (err) {
-        setError(err.message || 'Không thể tải danh sách ứng viên.');
-        setApplicants([]);
+        if (!isSilent && isComponentMounted) {
+          setError(err.message || 'Không thể tải danh sách ứng viên.');
+          setApplicants([]);
+        }
       } finally {
-        setLoading(false);
+        if (!isSilent && isComponentMounted) setLoading(false);
       }
     };
+
     fetchApplicants();
 
     const fetchSaved = async () => {
       try {
         const saved = await getSavedCandidates();
-        setSavedIds(saved.map(c => c.candidateId));
+        if (isComponentMounted) {
+          setSavedIds(saved.map(c => c.candidateId));
+        }
       } catch (err) {
         console.error('Failed to fetch saved candidates:', err);
       }
     };
     fetchSaved();
+
+    return () => {
+      isComponentMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [jobId]);
 
   const getStatusLabel = (status) => {
@@ -161,6 +196,29 @@ const JobApplicantsPage = () => {
     return new Date(b.appliedAt) - new Date(a.appliedAt);
   });
 
+  const handleExportCSV = () => {
+    const headers = ['Họ Tên', 'Email', 'Điểm AI (%)', 'Trạng Thái', 'Ngày Nộp'];
+    const rows = sortedApplicants.map(a => [
+      `"${a.fullName || ''}"`,
+      `"${a.email || ''}"`,
+      a.aiScore ? `${a.aiScore}` : 'Đang chờ chấm',
+      `"${getStatusLabel(a.status)}"`,
+      `"${new Date(a.appliedAt).toLocaleDateString('vi-VN')}"`
+    ]);
+    
+    // Thêm BOM (\uFEFF) để báo cho Excel biết file này là UTF-8 (chống lỗi font tiếng Việt)
+    const csvContent = "\uFEFF" + headers.join(',') + '\n' + rows.map(e => e.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Danh_sach_ung_vien_${jobId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-20">
       <div className="container mx-auto px-4">
@@ -218,7 +276,15 @@ const JobApplicantsPage = () => {
             <Sparkles size={18} />
             {sortByAi ? 'Đang xếp hạng AI' : 'Xếp hạng bằng AI'}
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium shadow-sm"
+          >
+            <Download size={18} />
+            Xuất CSV
+          </button>
+          
+          <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700">
             <Filter size={18} />
             Lọc
           </button>
