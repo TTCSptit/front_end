@@ -126,8 +126,7 @@ const RecruiterDashboardPage = () => {
     { icon: BarChart3, label: 'Thống kê', path: '/recruiter/stats' },
     { icon: MessageCircle, label: 'Tin nhắn', path: '/recruiter/messages' },
     { icon: Building2, label: 'Hồ sơ công ty', path: '/recruiter/company-profile' },
-    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' },
-    { icon: Bot, label: 'AI CV Matcher', path: '/recruiter/ai-matcher' }
+    { icon: Star, label: 'Ứng viên đã lưu', path: '/recruiter/saved-candidates' }
   ];
 
   return (
