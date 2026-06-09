@@ -320,7 +320,7 @@ const MessagingPage = ({ role }) => {
                     alert("🤖 AI (Llama 3 Local via Kaggle) đang tiến hành phân tích kịch bản phỏng vấn giả lập...\n\nQuá trình này mất khoảng 10-20 giây. Vui lòng không tắt trình duyệt!");
                     
                     try {
-                      const response = await fetch('http://127.0.0.1:8000/api/interview/simulate-analysis', {
+                      const response = await fetch('https://kakakaak123-ai-career-advisor.hf.space/api/interview/simulate-analysis', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json'
@@ -352,7 +352,7 @@ const MessagingPage = ({ role }) => {
                       navigate(`/interview-report/${sharedRoomId}`);
                     } catch (err) {
                       console.error(err);
-                      alert("⚠️ Thất bại: Hãy đảm bảo bạn đã bật local AI Python Service (cổng 8000) và đường hầm Kaggle đang hoạt động nhé!");
+                      alert("⚠️ Thất bại: Không thể kết nối tới AI Service (Hugging Face / Kaggle). Vui lòng thử lại sau!");
                     }
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-purple-500/20 border border-purple-500/20"
