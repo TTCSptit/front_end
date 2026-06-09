@@ -23,6 +23,7 @@
     "react-virtuoso": "^4.18.6",
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
+    "swiper": "^12.2.0",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

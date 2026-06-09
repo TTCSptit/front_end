@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Eye, Star, Filter, X, ChevronRight, CheckCircle, TrendingUp, Zap, Clock, Edit3, Briefcase, Layout as LayoutIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { EffectCoverflow, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-coverflow';
+import 'swiper/css/pagination';
 const CVTemplatesPage = () => {
     const navigate = useNavigate();
     const [selectedCategory, setSelectedCategory] = useState('Tất cả');
@@ -19,7 +23,7 @@ const CVTemplatesPage = () => {
             id: 1, 
             name: 'Minimalist Student', 
             category: 'Sinh viên',
-            image: 'https://marketplace.canva.com/EAFRuCp3DcY/1/0/1131w/canva-black-white-minimalist-cv-resume-f5JNR-K5jjw.jpg', 
+            image: '/cv-templates/cv1.png', 
             downloads: 12500,
             rating: 4.8,
             badge: 'Phổ biến',
@@ -29,7 +33,7 @@ const CVTemplatesPage = () => {
             id: 2, 
             name: 'Modern Tech Stack', 
             category: 'Công nghệ (IT)',
-            image: 'https://d1csarkz8obe9u.cloudfront.net/posterpreviews/resume-cv-design-template-fe8c48a734e568ba454044199a5e828d_screen.jpg?ts=1658826555', 
+            image: '/cv-templates/cv2.png', 
             downloads: 45200,
             rating: 4.9,
             badge: 'Pro',
@@ -39,7 +43,7 @@ const CVTemplatesPage = () => {
             id: 3, 
             name: 'Creative Agency', 
             category: 'Thiết kế',
-            image: 'https://cdn.venngage.com/template/thumbnail/small/b93557e8-3487-4348-8123-575a7b67b93f.webp', 
+            image: '/cv-templates/cv3.png', 
             downloads: 21000,
             rating: 4.7,
             badge: 'Hot',
@@ -49,7 +53,7 @@ const CVTemplatesPage = () => {
             id: 4, 
             name: 'Executive Leader', 
             category: 'Quản lý',
-            image: 'https://marketplace.canva.com/EAFcO7D2Zms/1/0/1131w/canva-grey-clean-professional-resume-J-7vK2w5v2Y.jpg', 
+            image: '/cv-templates/cv1.png', 
             downloads: 8900,
             rating: 4.9,
             badge: 'Premium',
@@ -59,7 +63,7 @@ const CVTemplatesPage = () => {
             id: 5, 
             name: 'Global Business', 
             category: 'Kinh doanh',
-            image: 'https://cdn.enhancv.com/predefined-examples/software-engineer-resume-example-v4.jpg', 
+            image: '/cv-templates/cv2.png', 
             downloads: 15400,
             rating: 4.8,
             badge: 'Mới',
@@ -69,7 +73,7 @@ const CVTemplatesPage = () => {
             id: 6, 
             name: 'Visual Artist', 
             category: 'Thiết kế',
-            image: 'https://images.pikbest.com/templates/20210518/bg/6fc5a2008779c.png!w700wp', 
+            image: '/cv-templates/cv3.png', 
             downloads: 11200,
             rating: 4.6,
             badge: 'Creative',
@@ -116,7 +120,71 @@ const CVTemplatesPage = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-16">
+            {/* Featured Carousel Section */}
+            <div className="container mx-auto px-4 pb-16">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-black text-gray-900">Mẫu CV Nổi Bật</h2>
+                    <p className="text-gray-500 mt-2">Lướt để xem các mẫu CV được yêu thích nhất</p>
+                </div>
+                <Swiper
+                    effect={'coverflow'}
+                    grabCursor={true}
+                    centeredSlides={true}
+                    slidesPerView={'auto'}
+                    initialSlide={2}
+                    coverflowEffect={{
+                        rotate: 20,
+                        stretch: 0,
+                        depth: 300,
+                        modifier: 1,
+                        slideShadows: true,
+                    }}
+                    pagination={{ clickable: true, dynamicBullets: true }}
+                    modules={[EffectCoverflow, Pagination]}
+                    className="w-full max-w-5xl py-12"
+                    style={{
+                        '--swiper-pagination-color': '#b91c1c',
+                    }}
+                >
+                    {filteredTemplates.map((template) => (
+                        <SwiperSlide key={`carousel-${template.id}`} className="w-[300px] sm:w-[350px] md:w-[400px]">
+                            <div 
+                                className="bg-white rounded-2xl shadow-2xl overflow-hidden cursor-pointer relative group border border-gray-100"
+                                onClick={() => setPreviewTemplate(template)}
+                            >
+                                <img 
+                                    src={template.image} 
+                                    alt={template.name} 
+                                    className="w-full h-[450px] md:h-[550px] object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                <div className="absolute bottom-0 left-0 w-full p-6 text-white transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                                    <span className="px-3 py-1 bg-ptit-red text-xs font-bold rounded-full mb-3 inline-block uppercase tracking-wider">{template.category}</span>
+                                    <h3 className="text-2xl font-black mb-1">{template.name}</h3>
+                                    <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-300">
+                                        <div className="flex items-center gap-1"><Star size={14} className="text-yellow-400 fill-current"/> {template.rating}</div>
+                                        <div className="flex items-center gap-1"><Download size={14} /> {(template.downloads/1000).toFixed(1)}k</div>
+                                    </div>
+                                    <button 
+                                        className="mt-4 w-full py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/cv-editor?template=${template.id}`);
+                                        }}
+                                    >
+                                        <Edit3 size={16} /> Dùng mẫu này
+                                    </button>
+                                </div>
+                            </div>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
+            </div>
+
+            <div className="container mx-auto px-4 py-8">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-black text-gray-900">Danh Sách Mẫu CV</h2>
+                </div>
                 {/* Styles Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {filteredTemplates.map((template, i) => {
